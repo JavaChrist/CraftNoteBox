@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
+import BrandMark from "@/components/brand/BrandMark";
 import { createPage, listPages } from "@/lib/actions/pages";
 import SidebarNav from "@/components/layout/SidebarNav";
 import SidebarPrivatePages from "@/components/layout/SidebarPrivatePages";
@@ -41,9 +42,12 @@ export default async function Sidebar() {
       <div className="flex items-center px-4 py-3">
         <Link
           href="/home"
-          className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground transition hover:text-foreground"
+          className="flex min-w-0 items-center gap-2.5 text-muted-foreground transition hover:text-foreground"
         >
-          CraftNoteBox
+          <BrandMark size="md" className="opacity-95" />
+          <span className="text-xs font-semibold uppercase tracking-[0.08em]">
+            CraftNoteBox
+          </span>
         </Link>
       </div>
       <SidebarNav />
