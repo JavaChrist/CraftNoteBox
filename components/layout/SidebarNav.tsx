@@ -20,7 +20,7 @@ const items = [
 
 function navLinkClass(active: boolean) {
   return [
-    "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition",
+    "flex min-h-11 touch-manipulation items-center gap-2 rounded-md px-2 py-2 text-sm transition",
     active
       ? "bg-secondary font-medium text-foreground ring-1 ring-border"
       : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground",

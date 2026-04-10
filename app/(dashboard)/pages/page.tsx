@@ -1,12 +1,9 @@
 import Link from "next/link";
 import { FileText, Plus, Search } from "lucide-react";
-import Sidebar from "@/components/layout/Sidebar";
 
 export default function PagesHome() {
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <main className="flex-1 px-8 py-10">
+    <main className="w-full flex-1 px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-10">
         <div className="mx-auto max-w-3xl space-y-6">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
@@ -66,8 +63,7 @@ export default function PagesHome() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </main>
   );
 }
 

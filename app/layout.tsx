@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import ThemeToggle from "@/components/layout/ThemeToggle";
+import PwaRegister from "@/components/pwa/PwaRegister";
 import { themeInitScript } from "@/lib/theme-inline-script";
 import {
   BRAND_APPLE_TOUCH,
@@ -9,10 +10,25 @@ import {
   BRAND_MANIFEST,
 } from "@/lib/brand-assets";
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#d6e3f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+  ],
+};
+
 export const metadata: Metadata = {
   title: "CraftNoteBox",
   description: "Éditeur type Notion — Next.js, Slate, Supabase",
   manifest: BRAND_MANIFEST,
+  appleWebApp: {
+    capable: true,
+    title: "CraftNoteBox",
+    statusBarStyle: "default",
+  },
   icons: {
     icon: [
       { url: BRAND_FAVICON, type: "image/png", sizes: "32x32" },
@@ -35,7 +51,8 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="bg-background text-foreground antialiased">
-        <div className="fixed right-3 top-3 z-[100] sm:right-4 sm:top-4">
+        <PwaRegister />
+        <div className="fixed right-[max(0.75rem,env(safe-area-inset-right,0px))] top-[max(0.75rem,env(safe-area-inset-top,0px))] z-[100] sm:right-4 sm:top-4">
           <ThemeToggle />
         </div>
         {children}

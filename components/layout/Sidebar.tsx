@@ -38,7 +38,7 @@ export default async function Sidebar() {
   }
 
   return (
-    <aside className="flex h-screen w-72 flex-col border-r border-border bg-card/50">
+    <aside className="flex h-full min-h-0 w-72 flex-col border-r border-border bg-card/50">
       <div className="flex items-center px-4 py-3">
         <Link
           href="/home"
@@ -93,11 +93,11 @@ export default async function Sidebar() {
           </>
         )}
       </div>
-      <div className="border-t border-border p-3">
+      <div className="border-t border-border px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
         <form action="/auth/signout" method="post">
           <button
             type="submit"
-            className="w-full rounded-md px-2 py-1.5 text-xs text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+            className="min-h-11 w-full touch-manipulation rounded-md px-2 py-2 text-xs text-muted-foreground transition hover:bg-secondary hover:text-foreground"
           >
             Déconnexion
           </button>

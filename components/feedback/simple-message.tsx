@@ -7,6 +7,8 @@ type Props = {
   description: string;
   tone?: "default" | "destructive" | "muted";
   action?: { href: string; label: string };
+  /** `embedded` : dans la zone principale (dashboard) ; `fullscreen` : page seule (ex. hors layout). */
+  variant?: "fullscreen" | "embedded";
 };
 
 /**
@@ -18,6 +20,7 @@ export function SimpleMessageScreen({
   description,
   tone = "default",
   action,
+  variant = "fullscreen",
 }: Props) {
   const iconClass =
     tone === "destructive"
@@ -26,9 +29,14 @@ export function SimpleMessageScreen({
         ? "text-muted-foreground"
         : "text-muted-foreground";
 
+  const shell =
+    variant === "embedded"
+      ? "flex w-full flex-col items-center justify-center px-4 py-8 text-foreground"
+      : "flex min-h-screen flex-col items-center justify-center bg-background px-6 py-12 text-foreground";
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 py-12 text-foreground">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card/80 p-8 text-center shadow-sm">
+    <div className={shell}>
+      <div className="w-full max-w-md rounded-xl border border-border bg-card/80 p-6 text-center shadow-sm sm:p-8">
         <Icon className={`mx-auto h-10 w-10 ${iconClass}`} aria-hidden />
         <h1 className="mt-4 text-lg font-semibold tracking-tight">{title}</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

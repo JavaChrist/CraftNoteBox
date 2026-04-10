@@ -12,7 +12,7 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background px-4 text-foreground">
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-8 bg-background pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] pt-[max(1.5rem,env(safe-area-inset-top,0px))] text-foreground">
       <div className="flex justify-center">
         <BrandMark size="xl" priority className="shadow-sm" />
       </div>

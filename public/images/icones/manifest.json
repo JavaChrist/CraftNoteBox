@@ -5,6 +5,7 @@
   "theme_color": "#1e293b",
   "background_color": "#0f172a",
   "display": "standalone",
+  "scope": "/",
   "start_url": "/",
   "icons": [
     {
@@ -18,6 +19,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/images/icones/logo512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

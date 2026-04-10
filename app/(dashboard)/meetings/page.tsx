@@ -1,4 +1,3 @@
-import Sidebar from "@/components/layout/Sidebar";
 import MeetingsPage from "@/components/meetings/MeetingsPage";
 import {
   listMeetingsWithLinks,
@@ -12,15 +11,12 @@ export default async function MeetingsRoute() {
   ]);
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <main className="flex-1 px-6 py-10 sm:px-8">
-        <MeetingsPage
-          meetings={meetings}
-          pickablePages={pickablePages}
-          meetingsSchemaMissing={schemaMissing}
-        />
-      </main>
-    </div>
+    <main className="w-full flex-1 px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-10">
+      <MeetingsPage
+        meetings={meetings}
+        pickablePages={pickablePages}
+        meetingsSchemaMissing={schemaMissing}
+      />
+    </main>
   );
 }

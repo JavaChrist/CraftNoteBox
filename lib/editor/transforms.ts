@@ -29,6 +29,20 @@ function blockIsEmpty(editor: EditorType, path: Path): boolean {
   return Editor.isEmpty(editor, node);
 }
 
+/** Après `removeNodes` sur `removedPath`, place le curseur en fin du bloc « précédent » logique (jamais `Path.previous` sur l’index 0). */
+function selectEndAfterEmptyBlockRemoved(
+  editor: EditorType,
+  removedPath: Path,
+): void {
+  const idx = removedPath[removedPath.length - 1];
+  const parent = Path.parent(removedPath);
+  if (idx === 0) {
+    Transforms.select(editor, Editor.end(editor, parent.concat(0)));
+  } else {
+    Transforms.select(editor, Editor.end(editor, Path.previous(removedPath)));
+  }
+}
+
 /**
  * Applique un type de bloc après suppression du « /… » (création ou transformation).
  */
@@ -229,7 +243,7 @@ export function withBlockEditor<T extends EditorType>(editor: T): T {
           return;
         }
         Transforms.removeNodes(editor, { at: path });
-        Transforms.select(editor, Editor.end(editor, Path.previous(path)));
+        selectEndAfterEmptyBlockRemoved(editor, path);
         return;
       }
 
@@ -248,7 +262,7 @@ export function withBlockEditor<T extends EditorType>(editor: T): T {
           }
         } else {
           Transforms.removeNodes(editor, { at: path });
-          Transforms.select(editor, Editor.end(editor, Path.previous(path)));
+          selectEndAfterEmptyBlockRemoved(editor, path);
         }
         return;
       }
