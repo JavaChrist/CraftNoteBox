@@ -185,6 +185,7 @@ export async function listPagesForMeetingPicker(): Promise<PickablePage[]> {
     .from("pages")
     .select("id, title, scope")
     .eq("user_id", user.uid)
+    .is("deleted_at", null)
     .order("title", { ascending: true });
 
   if (error) throw supabaseToError(error);
@@ -247,6 +248,7 @@ async function assertOwnPages(
     .from("pages")
     .select("id")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .in("id", unique);
 
   if (error) throw supabaseToError(error);
@@ -276,8 +278,8 @@ async function replaceMeetingPageLinks(
 }
 
 /**
- * Crée le meeting, une page « [titre] - Compte rendu » avec blocs Slate initiaux,
- * lie la page (et les pages additionnelles choisies) via `meeting_pages`.
+ * Crée le meeting ; optionnellement une page « [titre] - Compte rendu » avec blocs Slate,
+ * et lie les pages via `meeting_pages` (compte rendu + pages choisies).
  */
 export async function createMeetingWithPage(
   input: MeetingInput,
@@ -297,24 +299,32 @@ export async function createMeetingWithPage(
 
   await assertOwnPages(supabase, user.uid, input.pageIds);
 
-  const pageTitle = `${title} - Compte rendu`;
-  const { data: pageRow, error: pageErr } = await supabase
-    .from("pages")
-    .insert({
-      user_id: user.uid,
-      title: pageTitle,
-      parent_id: null,
-      icon: null,
-      scope: "private",
-    })
-    .select("id")
-    .single();
+  const wantMinutes = input.createMinutesPage !== false;
+  let minutesPageId: string | null = null;
 
-  if (pageErr) throw supabaseToError(pageErr);
-  const minutesPageId = (pageRow as { id: string }).id;
+  if (wantMinutes) {
+    const pageTitle = `${title} - Compte rendu`;
+    const { data: pageRow, error: pageErr } = await supabase
+      .from("pages")
+      .insert({
+        user_id: user.uid,
+        title: pageTitle,
+        parent_id: null,
+        icon: null,
+        scope: "private",
+      })
+      .select("id")
+      .single();
 
-  const seeds = buildMeetingMinutesBlockSeeds(title, formatMinutesDateLine(start, end));
-  await insertBlocksForPage(supabase, minutesPageId, user.uid, seeds);
+    if (pageErr) throw supabaseToError(pageErr);
+    minutesPageId = (pageRow as { id: string }).id;
+
+    const seeds = buildMeetingMinutesBlockSeeds(
+      title,
+      formatMinutesDateLine(start, end),
+    );
+    await insertBlocksForPage(supabase, minutesPageId, user.uid, seeds);
+  }
 
   const { data: meetRow, error: meetErr } = await supabase
     .from("meetings")
@@ -333,12 +343,17 @@ export async function createMeetingWithPage(
   if (meetErr) throw supabaseToError(meetErr);
 
   const meetingId = (meetRow as { id: string }).id;
-  const linkIds = [...new Set([minutesPageId, ...input.pageIds])];
+  const linkIds =
+    minutesPageId ?
+      [...new Set([minutesPageId, ...input.pageIds])]
+    : [...new Set(input.pageIds)];
   await replaceMeetingPageLinks(supabase, meetingId, linkIds);
 
   revalidateMeetings();
   revalidatePath("/pages");
-  revalidatePath(`/pages/${minutesPageId}`);
+  if (minutesPageId) {
+    revalidatePath(`/pages/${minutesPageId}`);
+  }
 
   const meeting = await fetchMeetingById(supabase, meetingId);
   return { meeting, minutesPageId };

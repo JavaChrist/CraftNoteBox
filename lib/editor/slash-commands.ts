@@ -3,11 +3,9 @@ import {
   Element as SlateElement,
   Node,
   Path,
-  Point,
-  Range,
-  Text,
   Transforms,
   type Editor as EditorType,
+  type Point,
 } from "slate";
 import type { BlockType } from "@/types/block";
 import {
@@ -17,6 +15,8 @@ import {
 import { setBlockTypeFromSlash } from "@/lib/editor/transforms";
 
 export type SlashMenuState = {
+  /** Ouverture via le bouton « + » (pas de texte « / » à supprimer). */
+  source: "button";
   blockPath: Path;
   slashPoint: Point;
   queryEnd: Point;
@@ -28,68 +28,32 @@ export type SlashMenuState = {
 
 export type { SlashMenuRow };
 
-function pointAtBlockCharOffset(
+/**
+ * Ouvre le menu blocs depuis le bouton « + » (curseur au début du bloc, aucun « / » dans le texte).
+ */
+export function createSlashMenuStateFromButton(
   editor: EditorType,
   blockPath: Path,
-  charOffset: number,
-): Point | null {
-  const block = Node.get(editor, blockPath);
-  if (!SlateElement.isElement(block)) return null;
-
-  let acc = 0;
-  for (const [textNode, path] of Node.texts(block)) {
-    if (!Text.isText(textNode)) continue;
-    const len = textNode.text.length;
-    if (acc + len >= charOffset) {
-      return { path: blockPath.concat(path), offset: charOffset - acc };
-    }
-    acc += len;
+  filter: string,
+): SlashMenuState | null {
+  let node: Node;
+  try {
+    node = Node.get(editor, blockPath);
+  } catch {
+    return null;
+  }
+  if (!SlateElement.isElement(node) || !Editor.isBlock(editor, node)) {
+    return null;
   }
 
-  if (charOffset === acc) {
-    const end = Editor.end(editor, blockPath);
-    return end;
-  }
-
-  return null;
-}
-
-/**
- * Détecte un motif `/` + filtre optionnel en fin de bloc (début de bloc ou après un espace).
- */
-export function computeSlashMenuState(editor: EditorType): SlashMenuState | null {
-  const { selection } = editor;
-  if (!selection || !Range.isCollapsed(selection)) return null;
-
-  const blockEntry = Editor.above(editor, {
-    match: (n) => SlateElement.isElement(n) && Editor.isBlock(editor, n),
-  });
-  if (!blockEntry) return null;
-
-  const [, blockPath] = blockEntry;
-  const start = Editor.start(editor, blockPath);
-  const beforeRange = { anchor: start, focus: selection.anchor };
-
-  if (Range.isBackward(beforeRange)) return null;
-
-  const beforeText = Editor.string(editor, beforeRange);
-  const m = beforeText.match(/(?:^|\s)\/([^\s/]*)$/);
-  if (!m) return null;
-
-  const filter = m[1] ?? "";
-  const slashIndex = beforeText.lastIndexOf("/");
-  if (slashIndex < 0) return null;
-
-  const slashPoint = pointAtBlockCharOffset(editor, blockPath, slashIndex);
-  if (!slashPoint) return null;
-
+  const slashPoint = Editor.start(editor, blockPath);
   const { rows, selectableRowIndices } = buildSlashMenuRows(filter);
-  if (rows.length === 0) return null;
 
   return {
+    source: "button",
     blockPath,
     slashPoint,
-    queryEnd: selection.anchor,
+    queryEnd: slashPoint,
     filter,
     rows,
     selectableRowIndices,
@@ -103,6 +67,12 @@ export function applySlashCommand(
 ): void {
   const { blockPath, slashPoint, queryEnd } = state;
 
+  try {
+    Node.get(editor, blockPath);
+  } catch {
+    return;
+  }
+
   Transforms.select(editor, {
     anchor: slashPoint,
     focus: queryEnd,
@@ -112,8 +82,5 @@ export function applySlashCommand(
   setBlockTypeFromSlash(editor, blockPath, blockType);
 }
 
-export function dismissSlashText(editor: EditorType, state: SlashMenuState): void {
-  const { slashPoint, queryEnd } = state;
-  Transforms.select(editor, { anchor: slashPoint, focus: queryEnd });
-  Transforms.delete(editor);
-}
+/** Fermeture du menu sans supprimer de texte (le « / » n’est plus utilisé). */
+export function dismissSlashText(_editor: EditorType, _state: SlashMenuState): void {}

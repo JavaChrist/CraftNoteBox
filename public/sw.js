@@ -1,7 +1,15 @@
-/* CraftNoteBox — service worker minimal (réseau direct). Étendre plus tard pour le cache / offline. */
+/* CraftNoteBox — cache minimal + page hors ligne pour navigations. */
+
+const STATIC_CACHE = "cnb-static-v1";
+const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(self.skipWaiting());
+  event.waitUntil(
+    caches
+      .open(STATIC_CACHE)
+      .then((cache) => cache.add(new Request(OFFLINE_URL, { cache: "reload" })))
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener("activate", (event) => {
@@ -9,5 +17,17 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  event.respondWith(fetch(event.request));
+  const { request } = event;
+
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request).catch(async () => {
+        const cached = await caches.match(OFFLINE_URL);
+        return cached ?? Response.error();
+      }),
+    );
+    return;
+  }
+
+  event.respondWith(fetch(request));
 });

@@ -7,6 +7,7 @@ import JavaChristButton from "@/components/ai/JavaChristButton";
 import JavaChristMenu from "@/components/ai/JavaChristMenu";
 import { useRegisterJavaChristRunner } from "@/components/ai/java-christ-context";
 import type { AiAction, AiSelectionMode } from "@/lib/ai/types";
+import { AI_MAX_INPUT_CHARS } from "@/lib/ai/limits";
 import {
   getJavaChristSource,
   aiResultToNodes,
@@ -160,6 +161,12 @@ export default function JavaChristPanel({
           {error}
         </p>
       ) : null}
+
+      <p className="mt-1 max-w-xs text-[11px] leading-snug text-muted-foreground">
+        Texte envoyé selon la sélection ou le bloc courant (voir l’indication
+        sous le résultat). Limite serveur : environ{" "}
+        {AI_MAX_INPUT_CHARS.toLocaleString("fr-FR")} caractères par requête.
+      </p>
 
       {phase === "loading" ? (
         <p className="text-xs text-muted-foreground">JavaChrist…</p>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerUser } from "@/lib/auth/session";
 import { buildSystemPrompt, buildUserPayload } from "@/lib/ai/prompts";
+import { AI_MAX_INPUT_CHARS } from "@/lib/ai/limits";
 import { isAiAction, type AiAction } from "@/lib/ai/types";
 
 /** Alias public pour le résumé de page (`summarize` reste l’action interne). */
@@ -13,8 +14,6 @@ function normalizeAiAction(raw: unknown): AiAction | null {
 }
 
 export const maxDuration = 60;
-
-const MAX_INPUT_CHARS = 80_000;
 
 type ChatCompletionResponse = {
   choices?: Array<{ message?: { content?: string | null } }>;
@@ -85,9 +84,9 @@ export async function POST(req: Request) {
     );
   }
 
-  if (trimmed.length > MAX_INPUT_CHARS) {
+  if (trimmed.length > AI_MAX_INPUT_CHARS) {
     return NextResponse.json(
-      { error: `Texte trop long (max ${MAX_INPUT_CHARS} caractères).` },
+      { error: `Texte trop long (max ${AI_MAX_INPUT_CHARS} caractères).` },
       { status: 400 },
     );
   }

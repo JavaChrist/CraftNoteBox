@@ -9,8 +9,28 @@ import {
   type Editor as EditorType,
 } from "slate";
 import type { BlockType } from "@/types/block";
+import {
+  DEFAULT_CODE_LANGUAGE,
+  normalizeCodeLanguage,
+} from "@/lib/editor/code-languages";
 import { createDefaultBlock } from "@/lib/blocks/schema";
 import { VOID_BLOCK_TYPES } from "@/lib/editor/block-types";
+
+const MEDIA_NODE_KEYS = [
+  "url",
+  "alt",
+  "fileName",
+  "mimeType",
+  "sizeBytes",
+  "ogTitle",
+  "ogDescription",
+  "ogImage",
+  "ogSiteName",
+] as const;
+
+function unsetMediaNodeProps(editor: EditorType, at: Path): void {
+  Transforms.unsetNodes(editor, [...MEDIA_NODE_KEYS], { at });
+}
 
 const DEMOTE_AT_START_TYPES = new Set<string>([
   "heading1",
@@ -44,6 +64,28 @@ function selectEndAfterEmptyBlockRemoved(
 }
 
 /**
+ * Supprime un bloc à la racine du document (bouton gouttière).
+ * S’il ne reste qu’un bloc, il est remplacé par un paragraphe vide (document jamais vide).
+ */
+export function removeRootBlock(editor: EditorType, blockPath: Path): void {
+  if (blockPath.length !== 1) return;
+
+  if (editor.children.length <= 1) {
+    Transforms.removeNodes(editor, { at: [0] });
+    Transforms.insertNodes(
+      editor,
+      { type: "paragraph", children: [{ text: "" }] } as Node,
+      { at: [0] },
+    );
+    Transforms.select(editor, Editor.start(editor, [0]));
+    return;
+  }
+
+  Transforms.removeNodes(editor, { at: blockPath });
+  selectEndAfterEmptyBlockRemoved(editor, blockPath);
+}
+
+/**
  * Applique un type de bloc après suppression du « /… » (création ou transformation).
  */
 export function setBlockTypeFromSlash(
@@ -56,7 +98,7 @@ export function setBlockTypeFromSlash(
     Transforms.insertNodes(
       editor,
       [
-        createDefaultBlock("divider") as Node,
+        createDefaultBlock(blockType) as Node,
         { type: "paragraph", children: [{ text: "" }] } as Node,
       ],
       { at: blockPath },
@@ -82,13 +124,25 @@ export function setBlockTypeFromSlash(
       } as object,
       { at: blockPath },
     );
+    unsetMediaNodeProps(editor, blockPath);
     Transforms.select(editor, Editor.end(editor, blockPath.concat(0)));
     return;
   }
 
-  Transforms.setNodes(editor, { type: blockType } as object, {
-    at: blockPath,
-  });
+  if (blockType === "code") {
+    Transforms.setNodes(
+      editor,
+      { type: "code", language: DEFAULT_CODE_LANGUAGE } as object,
+      { at: blockPath },
+    );
+    unsetMediaNodeProps(editor, blockPath);
+  } else {
+    Transforms.setNodes(editor, { type: blockType } as object, {
+      at: blockPath,
+    });
+    Transforms.unsetNodes(editor, "language", { at: blockPath });
+    unsetMediaNodeProps(editor, blockPath);
+  }
 
   if (blockType === "todo") {
     Transforms.setNodes(editor, { checked: false } as object, {
@@ -109,7 +163,10 @@ export function withBlockEditor<T extends EditorType>(editor: T): T {
   const { insertBreak, deleteBackward, normalizeNode, isVoid } = editor;
 
   editor.isVoid = (element) => {
-    if (SlateElement.isElement(element) && element.type === "divider") {
+    if (
+      SlateElement.isElement(element) &&
+      VOID_BLOCK_TYPES.has(element.type)
+    ) {
       return true;
     }
     return isVoid(element);
@@ -137,6 +194,16 @@ export function withBlockEditor<T extends EditorType>(editor: T): T {
           return;
         }
       }
+      if (node.type === "code") {
+        const raw = (node as { language?: string }).language;
+        const fixed = normalizeCodeLanguage(raw);
+        if (raw !== fixed) {
+          Transforms.setNodes(editor, { language: fixed } as object, {
+            at: path,
+          });
+          return;
+        }
+      }
     }
     normalizeNode(entry);
   };
@@ -158,7 +225,7 @@ export function withBlockEditor<T extends EditorType>(editor: T): T {
 
     const [el, path] = block;
 
-    if (SlateElement.isElement(el) && el.type === "divider") {
+    if (SlateElement.isElement(el) && VOID_BLOCK_TYPES.has(el.type)) {
       const next = Path.next(path);
       Transforms.insertNodes(
         editor,
@@ -170,6 +237,19 @@ export function withBlockEditor<T extends EditorType>(editor: T): T {
     }
 
     if (SlateElement.isElement(el) && el.type === "code") {
+      if (Range.isCollapsed(selection)) {
+        const atEnd = Editor.isEnd(editor, selection.anchor, path);
+        if (atEnd) {
+          const next = Path.next(path);
+          Transforms.insertNodes(
+            editor,
+            { type: "paragraph", children: [{ text: "" }] } as Node,
+            { at: next },
+          );
+          Transforms.select(editor, Editor.start(editor, next));
+          return;
+        }
+      }
       Transforms.insertText(editor, "\n");
       return;
     }
@@ -179,11 +259,39 @@ export function withBlockEditor<T extends EditorType>(editor: T): T {
     if (
       SlateElement.isElement(parentNode) &&
       parentNode.type === "toggle" &&
-      parentNode.children.length > 1 &&
+      Range.isCollapsed(selection)
+    ) {
+      const toggleOpen = (parentNode as { open?: boolean }).open !== false;
+      if (!toggleOpen && SlateElement.isElement(el)) {
+        const atEnd = Editor.isEnd(editor, selection.anchor, path);
+        if (atEnd) {
+          const after = Path.next(parentPath);
+          Transforms.insertNodes(
+            editor,
+            { type: "paragraph", children: [{ text: "" }] } as Node,
+            { at: after },
+          );
+          Transforms.select(editor, Editor.start(editor, after));
+          return;
+        }
+        Transforms.setNodes(editor, { open: true } as object, {
+          at: parentPath,
+        });
+        insertBreak();
+        return;
+      }
+    }
+
+    const parentAfterToggle = Editor.parent(editor, path);
+    const [parentNode2, parentPath2] = parentAfterToggle;
+    if (
+      SlateElement.isElement(parentNode2) &&
+      parentNode2.type === "toggle" &&
+      parentNode2.children.length > 1 &&
       Range.isCollapsed(selection)
     ) {
       const childIndex = path[path.length - 1];
-      const isLastChild = childIndex === parentNode.children.length - 1;
+      const isLastChild = childIndex === parentNode2.children.length - 1;
       const atEnd = Editor.isEnd(editor, selection.anchor, path);
       const empty = blockIsEmpty(editor, path);
       if (
@@ -194,7 +302,7 @@ export function withBlockEditor<T extends EditorType>(editor: T): T {
         el.type === "paragraph"
       ) {
         Transforms.removeNodes(editor, { at: path });
-        const afterToggle = Path.next(parentPath);
+        const afterToggle = Path.next(parentPath2);
         Transforms.insertNodes(
           editor,
           { type: "paragraph", children: [{ text: "" }] } as Node,
@@ -226,7 +334,7 @@ export function withBlockEditor<T extends EditorType>(editor: T): T {
     const [el, path] = block;
     const start = Editor.start(editor, path);
 
-    if (SlateElement.isElement(el) && el.type === "divider") {
+    if (SlateElement.isElement(el) && VOID_BLOCK_TYPES.has(el.type)) {
       Transforms.removeNodes(editor, { at: path });
       return;
     }

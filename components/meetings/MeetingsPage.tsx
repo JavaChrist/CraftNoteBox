@@ -4,8 +4,13 @@ import { Plus } from "lucide-react";
 import { useCallback, useState } from "react";
 import type { Meeting, PickablePage } from "@/lib/meetings/types";
 import CreateMeetingDialog from "@/components/meetings/CreateMeetingDialog";
+import MeetingsAgenda from "@/components/meetings/MeetingsAgenda";
 import MeetingsCalendar from "@/components/meetings/MeetingsCalendar";
 import MeetingsList from "@/components/meetings/MeetingsList";
+
+function startOfMonth(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
 
 type Props = {
   meetings: Meeting[];
@@ -20,6 +25,9 @@ export default function MeetingsPage({
 }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Meeting | null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() =>
+    startOfMonth(new Date()),
+  );
 
   const openCreate = useCallback(() => {
     setEditing(null);
@@ -66,13 +74,9 @@ export default function MeetingsPage({
           <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
             Réunions
           </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
             Calendrier & rendez-vous
           </h1>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Planifie des réunions, associe des pages pour préparer le contenu, et
-            retrouve tout dans une vue mois simple.
-          </p>
         </div>
         <button
           type="button"
@@ -83,16 +87,39 @@ export default function MeetingsPage({
               ? "Applique d’abord la migration SQL meetings sur Supabase"
               : undefined
           }
-          className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2 text-sm font-medium text-foreground transition hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation"
         >
           <Plus className="h-4 w-4" aria-hidden />
           Nouveau rendez-vous
         </button>
       </header>
 
-      <div className="flex flex-col gap-8">
-        <MeetingsCalendar meetings={meetings} />
-        <section aria-labelledby="meetings-list-heading">
+      <div className="flex w-full flex-col gap-8">
+        <section aria-labelledby="meetings-cal-heading" className="w-full">
+          <h2 id="meetings-cal-heading" className="sr-only">
+            Calendrier mensuel
+          </h2>
+          <MeetingsCalendar
+            meetings={meetings}
+            onMeetingClick={openEdit}
+            month={calendarMonth}
+            onMonthChange={setCalendarMonth}
+          />
+        </section>
+        <section aria-labelledby="meetings-agenda-heading" className="w-full">
+          <h2
+            id="meetings-agenda-heading"
+            className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground"
+          >
+            Agenda du mois
+          </h2>
+          <MeetingsAgenda
+            meetings={meetings}
+            year={calendarMonth.getFullYear()}
+            monthIndex={calendarMonth.getMonth()}
+          />
+        </section>
+        <section aria-labelledby="meetings-list-heading" className="w-full">
           <h2
             id="meetings-list-heading"
             className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground"

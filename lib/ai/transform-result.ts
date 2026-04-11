@@ -1,4 +1,25 @@
 import type { Descendant } from "slate";
+import {
+  DEFAULT_CODE_LANGUAGE,
+  normalizeCodeLanguage,
+} from "@/lib/editor/code-languages";
+
+function languageFromFenceHint(hint: string): string {
+  const h = hint.trim().toLowerCase();
+  if (!h) return DEFAULT_CODE_LANGUAGE;
+  const aliases: Record<string, string> = {
+    js: "javascript",
+    ts: "typescript",
+    py: "python",
+    rb: "ruby",
+    sh: "bash",
+    shell: "bash",
+    bash: "bash",
+    yml: "yaml",
+    md: "markdown",
+  };
+  return normalizeCodeLanguage(aliases[h] ?? h);
+}
 
 /**
  * Convertit une réponse IA (lignes type Markdown léger) en nœuds racine Slate.
@@ -11,11 +32,13 @@ export function parseAiTextToSlateNodes(raw: string): Descendant[] {
   let i = 0;
   const codeLines: string[] = [];
   let inCode = false;
+  let pendingCodeLang = DEFAULT_CODE_LANGUAGE;
 
   function flushCode() {
     if (codeLines.length === 0) return;
     out.push({
       type: "code",
+      language: pendingCodeLang,
       children: [{ text: codeLines.join("\n") }],
     } as Descendant);
     codeLines.length = 0;
@@ -32,6 +55,7 @@ export function parseAiTextToSlateNodes(raw: string): Descendant[] {
         inCode = false;
       } else {
         inCode = true;
+        pendingCodeLang = languageFromFenceHint(t.slice(3));
       }
       i++;
       continue;

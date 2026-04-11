@@ -3,6 +3,7 @@
 import { Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import SearchCommandPalette from "@/components/layout/SearchCommandPalette";
 
 type Props = {
   sidebar: React.ReactNode;
@@ -38,6 +39,7 @@ export default function DashboardChrome({ sidebar, children }: Props) {
 
   return (
     <div className="flex min-h-[100dvh] w-full">
+      <SearchCommandPalette />
       <div
         className={`fixed inset-y-0 left-0 z-50 flex h-[100dvh] w-72 max-w-[85vw] flex-col bg-card/50 pt-[env(safe-area-inset-top,0px)] shadow-xl transition-transform duration-200 ease-out md:static md:z-0 md:h-auto md:max-w-none md:translate-x-0 md:pt-0 md:shadow-none md:bg-transparent ${
           open ? "translate-x-0" : "-translate-x-full md:translate-x-0"

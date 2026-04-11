@@ -1,6 +1,11 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { createPortal } from "react-dom";
 import { ReactEditor, useSlate } from "slate-react";
 import type { SlashMenuState } from "@/lib/editor/slash-commands";
@@ -11,6 +16,7 @@ type Props = {
   state: SlashMenuState | null;
   /** Index parmi les entrées sélectionnables uniquement (blocs réels). */
   selectedSelectableIndex: number;
+  onFilterChange: (filter: string) => void;
   onSelectBlock: (type: BlockType) => void;
   onSelectJavaChrist?: (action: AiAction) => void;
 };
@@ -18,14 +24,18 @@ type Props = {
 export default function SlashCommandMenu({
   state,
   selectedSelectableIndex,
+  onFilterChange,
   onSelectBlock,
   onSelectJavaChrist,
 }: Props) {
   const editor = useSlate();
   const listRef = useRef<HTMLDivElement>(null);
-  const [coords, setCoords] = useState<{ top: number; left: number } | null>(
-    null,
-  );
+  const [coords, setCoords] = useState<{
+    left: number;
+    top?: number;
+    bottom?: number;
+    maxHeight: number;
+  } | null>(null);
 
   useLayoutEffect(() => {
     if (!state) {
@@ -38,15 +48,29 @@ export default function SlashCommandMenu({
         focus: state.slashPoint,
       });
       const rect = domRange.getBoundingClientRect();
-      const pad = 6;
-      const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
-      const menuWidth = 320;
-      let left = rect.left + window.scrollX;
-      left = Math.min(left, vw + window.scrollX - menuWidth - 12);
-      setCoords({
-        top: rect.bottom + window.scrollY + pad,
-        left: Math.max(12 + window.scrollX, left),
-      });
+      const pad = 8;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const menuWidth = Math.min(320, vw - 24);
+      const left = Math.max(12, Math.min(rect.left, vw - menuWidth - 12));
+
+      const spaceBelow = vh - rect.bottom - pad;
+      const spaceAbove = rect.top - pad;
+      /** Hauteur max raisonnable pour le menu (filtre + liste + pied). */
+      const cap = Math.min(vh * 0.85, 520);
+      const preferBelow = spaceBelow >= 200 || spaceBelow >= spaceAbove;
+
+      if (preferBelow) {
+        const maxHeight = Math.min(cap, Math.max(160, spaceBelow - 4));
+        setCoords({ left, top: rect.bottom + pad, maxHeight });
+      } else {
+        const maxHeight = Math.min(cap, Math.max(160, spaceAbove - 4));
+        setCoords({
+          left,
+          bottom: vh - rect.top + pad,
+          maxHeight,
+        });
+      }
     } catch {
       setCoords(null);
     }
@@ -64,18 +88,57 @@ export default function SlashCommandMenu({
 
   const { rows, selectableRowIndices } = state;
 
+  const hasSelectable = selectableRowIndices.length > 0;
+
+  const menuStyle: CSSProperties = {
+    left: coords.left,
+    maxHeight: coords.maxHeight,
+    ...(coords.top !== undefined ?
+      { top: coords.top }
+    : { bottom: coords.bottom }),
+  };
+
   return createPortal(
     <div
-      className="fixed z-50 flex w-[min(100vw-1.5rem,20rem)] max-w-[20rem] flex-col overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-lg"
-      style={{ top: coords.top, left: coords.left }}
+      data-slash-command-menu=""
+      className="fixed z-50 flex w-[min(100vw-1.5rem,20rem)] max-w-[20rem] min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-lg"
+      style={menuStyle}
       onMouseDown={(e) => e.preventDefault()}
-      role="listbox"
+      role="presentation"
       aria-label="Blocs et commandes"
     >
+      <div className="shrink-0 border-b border-border p-2">
+        <label className="sr-only" htmlFor="slash-menu-filter">
+          Filtrer les blocs
+        </label>
+        <input
+          id="slash-menu-filter"
+          type="search"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          placeholder="Rechercher un bloc…"
+          value={state.filter}
+          onChange={(e) => onFilterChange(e.target.value)}
+          className="w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm text-foreground outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      </div>
       <div
         ref={listRef}
-        className="max-h-[min(70vh,26rem)] overflow-y-auto overscroll-contain p-1.5"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5"
+        role="listbox"
+        aria-label="Liste des blocs"
       >
+        {!hasSelectable && rows.length === 0 ? (
+          <p className="px-2 py-6 text-center text-sm text-muted-foreground">
+            Aucun résultat. Modifie ta recherche.
+          </p>
+        ) : null}
+        {!hasSelectable && rows.length > 0 ? (
+          <p className="px-2 py-4 text-center text-sm text-muted-foreground">
+            Aucun bloc ne correspond à « {state.filter} ».
+          </p>
+        ) : null}
         {rows.map((row, rowIndex) => {
           if (row.kind === "heading") {
             return (
@@ -197,7 +260,7 @@ export default function SlashCommandMenu({
           );
         })}
       </div>
-      <div className="flex items-center justify-between border-t border-border px-2.5 py-2 text-[11px] text-muted-foreground">
+      <div className="flex shrink-0 items-center justify-between border-t border-border px-2.5 py-2 text-[11px] text-muted-foreground">
         <span>Fermer le menu</span>
         <kbd className="rounded border border-border bg-muted/40 px-1.5 py-0.5 font-mono text-[10px]">
           esc

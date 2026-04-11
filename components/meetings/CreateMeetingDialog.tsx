@@ -38,17 +38,31 @@ export default function CreateMeetingDialog({
       startAt: string;
       endAt: string;
       pageIds: string[];
+      createMinutesPage: boolean;
     }) => {
       setSubmitting(true);
       try {
         if (editing) {
-          await updateMeeting(editing.id, data);
+          const { createMinutesPage: _c, ...rest } = data;
+          await updateMeeting(editing.id, rest);
           close();
           router.refresh();
         } else {
-          const { minutesPageId } = await createMeetingWithPage(data);
+          const { minutesPageId } = await createMeetingWithPage({
+            title: data.title,
+            description: data.description,
+            location: data.location,
+            startAt: data.startAt,
+            endAt: data.endAt,
+            pageIds: data.pageIds,
+            createMinutesPage: data.createMinutesPage,
+          });
           close();
-          router.push(`/pages/${minutesPageId}`);
+          if (minutesPageId) {
+            router.push(`/pages/${minutesPageId}`);
+          } else {
+            router.refresh();
+          }
         }
       } finally {
         setSubmitting(false);
@@ -82,9 +96,9 @@ export default function CreateMeetingDialog({
             {editing ? "Modifier le rendez-vous" : "Nouveau rendez-vous"}
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            {editing
-              ? "Heure locale."
-              : "Heure locale · page compte rendu ouverte après création."}
+            {editing ?
+              "Heure locale."
+            : "Heure locale · ouverture de la page de compte rendu seulement si l’option est cochée."}
           </p>
         </div>
         <div className="p-4">

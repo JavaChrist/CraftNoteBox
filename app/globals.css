@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Bloc code Slate : base claire sur fond sombre (évite l’héritage text-foreground en mode clair) */
+.editor-slate-code-pre.hljs,
+.editor-slate-code-pre.hljs code {
+  color: #e6edf3;
+}
+
 /* Mode clair — bleu pastel plus marqué (moins « blanc », plus de saturation) */
 :root {
   --background: 218 58% 88%;

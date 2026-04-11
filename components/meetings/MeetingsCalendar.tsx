@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Meeting } from "@/lib/meetings/types";
 
@@ -35,10 +35,19 @@ function meetingLocalDayKey(iso: string): string {
 
 type Props = {
   meetings: Meeting[];
+  /** Clic sur un rendez-vous dans une case (ouvre le même dialogue que « Modifier »). */
+  onMeetingClick: (meeting: Meeting) => void;
+  /** Premier jour du mois affiché (contrôlé par le parent pour l’agenda). */
+  month: Date;
+  onMonthChange: (nextMonthStart: Date) => void;
 };
 
-export default function MeetingsCalendar({ meetings }: Props) {
-  const [cursor, setCursor] = useState(() => startOfMonth(new Date()));
+export default function MeetingsCalendar({
+  meetings,
+  onMeetingClick,
+  month: cursor,
+  onMonthChange,
+}: Props) {
 
   const byDay = useMemo(() => {
     const map = new Map<string, Meeting[]>();
@@ -99,110 +108,116 @@ export default function MeetingsCalendar({ meetings }: Props) {
   }, [meetings, year, monthIndex]);
 
   return (
-    <div className="w-full rounded-xl border border-border bg-card/40 p-4">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <div>
-          <h2 className="text-sm font-semibold capitalize text-foreground">
-            {monthLabel}
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            {countForMonth === 0
-              ? "Aucun rendez-vous ce mois-ci"
-              : `${countForMonth} rendez-vous ce mois-ci`}
-          </p>
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setCursor((c) => addMonths(c, -1))}
-            className="rounded-md p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-            aria-label="Mois précédent"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setCursor(startOfMonth(new Date()))}
-            className="rounded-md px-2 py-1 text-xs text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-          >
-            Aujourd’hui
-          </button>
-          <button
-            type="button"
-            onClick={() => setCursor((c) => addMonths(c, 1))}
-            className="rounded-md p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-            aria-label="Mois suivant"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+    <div className="w-full overflow-hidden rounded-xl border border-border bg-card/50 shadow-sm">
+      <div className="border-b border-border/80 bg-gradient-to-br from-primary/[0.06] to-transparent px-4 py-4 sm:px-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold capitalize tracking-tight text-foreground sm:text-xl">
+              {monthLabel}
+            </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+              {countForMonth === 0
+                ? "Aucun rendez-vous ce mois-ci"
+                : `${countForMonth} rendez-vous ce mois-ci`}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1 self-start sm:self-center">
+            <button
+              type="button"
+              onClick={() => onMonthChange(addMonths(cursor, -1))}
+              className="rounded-lg border border-transparent p-2 text-muted-foreground transition hover:border-border hover:bg-secondary hover:text-foreground touch-manipulation"
+              aria-label="Mois précédent"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onMonthChange(startOfMonth(new Date()))}
+              className="rounded-lg border border-border bg-background/80 px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-secondary touch-manipulation"
+            >
+              Aujourd’hui
+            </button>
+            <button
+              type="button"
+              onClick={() => onMonthChange(addMonths(cursor, 1))}
+              className="rounded-lg border border-transparent p-2 text-muted-foreground transition hover:border-border hover:bg-secondary hover:text-foreground touch-manipulation"
+              aria-label="Mois suivant"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-px rounded-lg bg-border text-center text-[11px] font-medium text-muted-foreground">
-        {WEEKDAYS.map((d) => (
-          <div key={d} className="bg-card py-2">
-            {d}
-          </div>
-        ))}
-        {cells.map((cell, i) => {
-          const dayMeetings =
-            cell != null
-              ? byDay.get(ymdKey(year, monthIndex, cell.day)) ?? []
-              : [];
-          const dot =
-            dayMeetings.length > 0 ? (
-              <span
-                className="mt-0.5 inline-block h-1.5 w-1.5 rounded-full bg-primary"
-                title={`${dayMeetings.length} rendez-vous`}
-                aria-hidden
-              />
-            ) : null;
 
-          return (
+      <div className="p-2 sm:p-3">
+        <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl bg-border ring-1 ring-border/60">
+          {WEEKDAYS.map((d) => (
             <div
-              key={`${year}-${monthIndex}-${i}`}
-              className="min-h-[4.25rem] bg-background p-1 text-left align-top"
+              key={d}
+              className="bg-muted/40 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-[11px]"
             >
-              {cell ? (
-                <div
-                  className={`flex h-full min-h-[3.75rem] flex-col rounded-md px-0.5 py-0.5 ${
-                    isToday(cell.day)
-                      ? "bg-primary/15 ring-1 ring-primary/40"
-                      : "hover:bg-secondary/50"
-                  }`}
-                >
+              {d}
+            </div>
+          ))}
+          {cells.map((cell, i) => {
+            const dayMeetings =
+              cell != null
+                ? byDay.get(ymdKey(year, monthIndex, cell.day)) ?? []
+                : [];
+
+            return (
+              <div
+                key={`${year}-${monthIndex}-${i}`}
+                className="min-h-[5rem] bg-background p-1 text-left align-top sm:min-h-[5.5rem]"
+              >
+                {cell ? (
                   <div
-                    className={`flex shrink-0 items-center justify-center gap-1 text-sm ${
+                    className={`flex h-full min-h-[4.5rem] flex-col rounded-lg px-0.5 py-1 sm:min-h-[5rem] ${
                       isToday(cell.day)
-                        ? "font-semibold text-primary"
-                        : "text-foreground"
+                        ? "bg-primary/[0.12] ring-2 ring-primary/35"
+                        : "ring-1 ring-transparent hover:bg-secondary/40"
                     }`}
                   >
-                    <span>{cell.day}</span>
-                    {dot}
+                    <div
+                      className={`flex shrink-0 items-center justify-center gap-1.5 text-sm tabular-nums ${
+                        isToday(cell.day)
+                          ? "font-semibold text-primary"
+                          : "font-medium text-foreground"
+                      }`}
+                    >
+                      <span>{cell.day}</span>
+                      {dayMeetings.length > 0 ? (
+                        <span
+                          className="rounded-full bg-primary/20 px-1.5 py-px text-[10px] font-semibold text-primary"
+                          aria-label={`${dayMeetings.length} rendez-vous`}
+                        >
+                          {dayMeetings.length}
+                        </span>
+                      ) : null}
+                    </div>
+                    <ul className="mt-1 max-h-[4.25rem] min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden overscroll-contain [-webkit-overflow-scrolling:touch]">
+                      {dayMeetings.map((m) => (
+                        <li key={m.id} className="min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => onMeetingClick(m)}
+                            className="w-full truncate rounded-md border border-border/50 bg-secondary/50 px-1.5 py-1 text-left text-[10px] font-medium leading-tight text-foreground shadow-sm transition hover:border-primary/40 hover:bg-primary/10 hover:text-foreground touch-manipulation sm:text-[11px]"
+                            title={m.title}
+                            aria-label={`Ouvrir « ${m.title} »`}
+                          >
+                            {m.title}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <ul className="mt-0.5 min-h-0 flex-1 space-y-0.5 overflow-hidden">
-                    {dayMeetings.slice(0, 3).map((m) => (
-                      <li
-                        key={m.id}
-                        className="truncate rounded bg-secondary/60 px-1 py-px text-[10px] leading-tight text-foreground"
-                        title={m.title}
-                      >
-                        {m.title}
-                      </li>
-                    ))}
-                    {dayMeetings.length > 3 ? (
-                      <li className="px-1 text-[10px] text-muted-foreground">
-                        +{dayMeetings.length - 3}
-                      </li>
-                    ) : null}
-                  </ul>
-                </div>
-              ) : (
-                <div className="h-full min-h-[3.75rem]" aria-hidden />
-              )}
-            </div>
-          );
-        })}
+                ) : (
+                  <div className="h-full min-h-[4.5rem] bg-muted/20" aria-hidden />
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

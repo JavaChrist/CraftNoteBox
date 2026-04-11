@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   useCallback,
-  useEffect,
   useMemo,
   useState,
   useTransition,
@@ -18,6 +17,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { createPage, deletePage, updatePage } from "@/lib/actions/pages";
+import SidebarModal from "@/components/layout/SidebarModal";
 import {
   buildPageTree,
   type PageTreeNode,
@@ -27,47 +27,6 @@ import type { Page } from "@/lib/db/types";
 type Props = {
   pages: Page[];
 };
-
-function ModalShell({
-  title,
-  children,
-  onClose,
-}: {
-  title: string;
-  children: React.ReactNode;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
-      role="presentation"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="sidebar-modal-title"
-        className="w-full max-w-sm rounded-lg border border-border bg-card p-4 shadow-lg"
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        <h2 id="sidebar-modal-title" className="text-sm font-semibold">
-          {title}
-        </h2>
-        <div className="mt-3">{children}</div>
-      </div>
-    </div>
-  );
-}
 
 function isExpanded(
   expanded: Record<string, boolean>,
@@ -96,6 +55,12 @@ export default function SidebarPageList({ pages }: Props) {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const [newSubpageParentId, setNewSubpageParentId] = useState<string | null>(
+    null,
+  );
+  const [newSubpageTitle, setNewSubpageTitle] = useState("");
+  const [newSubpageError, setNewSubpageError] = useState<string | null>(null);
+
   const closeRename = () => {
     setRenamePage(null);
     setRenameError(null);
@@ -104,6 +69,12 @@ export default function SidebarPageList({ pages }: Props) {
   const closeDelete = () => {
     setDeletePageState(null);
     setDeleteError(null);
+  };
+
+  const closeNewSubpage = () => {
+    setNewSubpageParentId(null);
+    setNewSubpageTitle("");
+    setNewSubpageError(null);
   };
 
   const toggleExpand = useCallback((id: string) => {
@@ -150,17 +121,29 @@ export default function SidebarPageList({ pages }: Props) {
     });
   };
 
-  const createSubPage = (parentId: string) => {
+  const submitNewSubpage = () => {
+    if (!newSubpageParentId) return;
+    setNewSubpageError(null);
+    const t = newSubpageTitle.trim();
+    if (!t) {
+      setNewSubpageError("Indique un titre pour la sous-page.");
+      return;
+    }
+    const parentId = newSubpageParentId;
     setActionError(null);
     startTransition(async () => {
       try {
-        await createPage({ parentId, title: "Nouvelle page" });
+        const page = await createPage({ parentId, title: t });
         setExpanded((prev) => ({ ...prev, [parentId]: true }));
+        closeNewSubpage();
         setActionError(null);
+        router.push(`/pages/${page.id}`);
         router.refresh();
       } catch (err) {
-        setActionError(
-          err instanceof Error ? err.message : "Impossible de créer la sous-page",
+        setNewSubpageError(
+          err instanceof Error
+            ? err.message
+            : "Impossible de créer la sous-page",
         );
       }
     });
@@ -216,7 +199,9 @@ export default function SidebarPageList({ pages }: Props) {
               disabled={pending}
               onClick={(e) => {
                 e.preventDefault();
-                createSubPage(node.id);
+                setNewSubpageError(null);
+                setNewSubpageTitle("");
+                setNewSubpageParentId(node.id);
               }}
               className="rounded p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-foreground disabled:opacity-40"
               title="Sous-page"
@@ -277,7 +262,7 @@ export default function SidebarPageList({ pages }: Props) {
       </nav>
 
       {renamePage ? (
-        <ModalShell title="Renommer la page" onClose={closeRename}>
+        <SidebarModal title="Renommer la page" onClose={closeRename}>
           <label htmlFor="sidebar-rename-title" className="sr-only">
             Nouveau titre
           </label>
@@ -320,16 +305,17 @@ export default function SidebarPageList({ pages }: Props) {
               {pending ? "Enregistrement…" : "Enregistrer"}
             </button>
           </div>
-        </ModalShell>
+        </SidebarModal>
       ) : null}
 
       {deletePageState ? (
-        <ModalShell title="Supprimer la page ?" onClose={closeDelete}>
+        <SidebarModal title="Supprimer la page ?" onClose={closeDelete}>
           <p className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">
               « {deletePageState.title || "Sans titre"} »
             </span>{" "}
-            et son contenu seront supprimés définitivement.
+            sera mise à la corbeille (restauration possible depuis le menu
+            Corbeille).
           </p>
           {deleteError ? (
             <p className="mt-2 text-xs text-destructive" role="alert">
@@ -354,7 +340,55 @@ export default function SidebarPageList({ pages }: Props) {
               {pending ? "Suppression…" : "Supprimer"}
             </button>
           </div>
-        </ModalShell>
+        </SidebarModal>
+      ) : null}
+
+      {newSubpageParentId ? (
+        <SidebarModal title="Nouvelle sous-page" onClose={closeNewSubpage}>
+          <label htmlFor="sidebar-new-subpage-title" className="sr-only">
+            Titre de la sous-page
+          </label>
+          <input
+            id="sidebar-new-subpage-title"
+            type="text"
+            value={newSubpageTitle}
+            onChange={(e) => setNewSubpageTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                submitNewSubpage();
+              }
+            }}
+            placeholder="Titre de la sous-page"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            autoFocus
+            disabled={pending}
+            autoComplete="off"
+          />
+          {newSubpageError ? (
+            <p className="mt-2 text-xs text-destructive" role="alert">
+              {newSubpageError}
+            </p>
+          ) : null}
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              disabled={pending}
+              onClick={closeNewSubpage}
+              className="rounded-md border border-border px-3 py-1.5 text-xs transition hover:bg-secondary"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={submitNewSubpage}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+            >
+              {pending ? "Création…" : "Créer"}
+            </button>
+          </div>
+        </SidebarModal>
       ) : null}
     </>
   );

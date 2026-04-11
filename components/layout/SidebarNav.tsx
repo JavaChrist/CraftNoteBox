@@ -8,6 +8,7 @@ import {
   Inbox,
   Search,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 
 const items = [
@@ -16,6 +17,7 @@ const items = [
   { href: "/assistant", label: "JavaChrist", icon: Sparkles },
   { href: "/inbox", label: "Boîte de réception", icon: Inbox },
   { href: "/search", label: "Rechercher", icon: Search },
+  { href: "/trash", label: "Corbeille", icon: Trash2 },
 ] as const;
 
 function navLinkClass(active: boolean) {

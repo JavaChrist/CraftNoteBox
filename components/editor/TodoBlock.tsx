@@ -5,17 +5,19 @@ import { useSlate } from "slate-react";
 import type { RenderElementProps } from "slate-react";
 import { findElementPathInEditor } from "@/lib/editor/find-element-path";
 
-export default function TodoBlock({
-  attributes,
-  children,
+export function TodoBlockBody({
   element,
-}: RenderElementProps) {
+  children,
+}: {
+  element: RenderElementProps["element"];
+  children: React.ReactNode;
+}) {
   const editor = useSlate();
   const path = findElementPathInEditor(editor, element);
   const checked = !!element.checked;
 
   return (
-    <div {...attributes} className="flex items-start gap-2 py-0.5">
+    <>
       <span contentEditable={false} className="pt-1">
         <input
           type="checkbox"
@@ -32,6 +34,18 @@ export default function TodoBlock({
         />
       </span>
       <div className="min-w-0 flex-1 leading-7">{children}</div>
+    </>
+  );
+}
+
+export default function TodoBlock({
+  attributes,
+  children,
+  element,
+}: RenderElementProps) {
+  return (
+    <div {...attributes} className="flex items-start gap-2 py-0.5">
+      <TodoBlockBody element={element}>{children}</TodoBlockBody>
     </div>
   );
 }

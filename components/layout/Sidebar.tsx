@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 import BrandMark from "@/components/brand/BrandMark";
-import { createPage, listPages } from "@/lib/actions/pages";
+import { listPages } from "@/lib/actions/pages";
 import SidebarNav from "@/components/layout/SidebarNav";
 import SidebarPrivatePages from "@/components/layout/SidebarPrivatePages";
 import SidebarProPages from "@/components/layout/SidebarProPages";
@@ -25,16 +25,6 @@ export default async function Sidebar() {
   } catch (err) {
     loadError = formatLoadError(err);
     console.error("Impossible de charger les pages:", loadError);
-  }
-
-  async function handleCreatePrivatePage() {
-    "use server";
-    await createPage({ title: "Nouvelle page", scope: "private" });
-  }
-
-  async function handleCreateProPage() {
-    "use server";
-    await createPage({ title: "Nouvelle page", scope: "pro" });
   }
 
   return (
@@ -82,14 +72,8 @@ export default async function Sidebar() {
           </div>
         ) : (
           <>
-            <SidebarPrivatePages
-              pages={privatePages}
-              createPageAction={handleCreatePrivatePage}
-            />
-            <SidebarProPages
-              pages={proPages}
-              createPageAction={handleCreateProPage}
-            />
+            <SidebarPrivatePages pages={privatePages} />
+            <SidebarProPages pages={proPages} />
           </>
         )}
       </div>

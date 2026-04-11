@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SearchFormClient from "@/components/search/SearchFormClient";
 import { globalSearch } from "@/lib/actions/search";
 
 type Props = {
@@ -30,30 +31,19 @@ export default async function SearchPage({ searchParams }: Props) {
             </p>
             <h1 className="mt-1 text-2xl font-semibold">Trouver une page</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Recherche dans les titres et dans le texte des blocs.
+              Recherche dans les titres et dans le texte des blocs. Raccourci :{" "}
+              <kbd className="rounded border border-border bg-muted px-1 py-px font-mono text-[10px]">
+                Ctrl
+              </kbd>{" "}
+              +{" "}
+              <kbd className="rounded border border-border bg-muted px-1 py-px font-mono text-[10px]">
+                K
+              </kbd>
+              .
             </p>
           </div>
 
-          <form action="/search" method="get" className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <label htmlFor="search-q" className="sr-only">
-              Terme de recherche
-            </label>
-            <input
-              id="search-q"
-              name="q"
-              type="search"
-              defaultValue={query}
-              placeholder="Mot-clé…"
-              autoComplete="off"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
-            <button
-              type="submit"
-              className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
-            >
-              Rechercher
-            </button>
-          </form>
+          <SearchFormClient defaultQuery={query} />
 
           {searchError ? (
             <div

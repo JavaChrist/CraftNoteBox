@@ -17,7 +17,7 @@ export type Meeting = {
   endAt: string;
   createdAt: string;
   updatedAt: string;
-  /** Page auto-créée « … - Compte rendu » (migration `minutes_page_id`). */
+  /** Page « … - Compte rendu » si créée à l’ouverture du RDV ; sinon `null`. */
   minutesPageId: string | null;
   linkedPages: MeetingLinkedPage[];
 };
@@ -30,6 +30,11 @@ export type MeetingInput = {
   startAt: string;
   endAt: string;
   pageIds: string[];
+  /**
+   * Par défaut `true` côté serveur.
+   * Si `false`, aucune page « … - Compte rendu » n’est créée (`minutes_page_id` null).
+   */
+  createMinutesPage?: boolean;
 };
 
 export type PickablePage = {
@@ -40,5 +45,6 @@ export type PickablePage = {
 
 export type CreateMeetingWithPageResult = {
   meeting: Meeting;
-  minutesPageId: string;
+  /** `null` lorsque `createMinutesPage: false`. */
+  minutesPageId: string | null;
 };

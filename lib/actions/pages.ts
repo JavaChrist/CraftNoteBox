@@ -9,6 +9,7 @@ import type { Page, PageScope } from "../db/types";
 function revalidateAppNavigation() {
   revalidatePath("/home");
   revalidatePath("/pages");
+  revalidatePath("/trash");
   revalidatePath("/meetings");
   revalidatePath("/inbox");
   revalidatePath("/search");
@@ -24,6 +25,7 @@ type PageRow = {
   scope?: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 };
 
 function rowScope(row: PageRow): PageScope {
@@ -52,6 +54,7 @@ export async function listPages(scope: PageScope): Promise<Page[]> {
     .select("*")
     .eq("user_id", user.uid)
     .eq("scope", scope)
+    .is("deleted_at", null)
     .order("updated_at", { ascending: false });
 
   if (error) throw supabaseToError(error);
@@ -66,6 +69,7 @@ export async function getPage(pageId: string): Promise<Page | null> {
     .from("pages")
     .select("*")
     .eq("id", pageId)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (error) throw supabaseToError(error);
@@ -75,6 +79,22 @@ export async function getPage(pageId: string): Promise<Page | null> {
     throw new Error("Accès refusé");
   }
   return rowToPage(row);
+}
+
+/** Pages dans la corbeille (tous espaces), les plus récentes en premier. */
+export async function listTrashedPages(): Promise<Page[]> {
+  const user = await requireUser();
+  const supabase = createServiceRoleClient();
+
+  const { data, error } = await supabase
+    .from("pages")
+    .select("*")
+    .eq("user_id", user.uid)
+    .not("deleted_at", "is", null)
+    .order("deleted_at", { ascending: false });
+
+  if (error) throw supabaseToError(error);
+  return (data as PageRow[]).map(rowToPage);
 }
 
 export async function createPage(input: {
@@ -95,6 +115,7 @@ export async function createPage(input: {
       .from("pages")
       .select("user_id, scope")
       .eq("id", parentId)
+      .is("deleted_at", null)
       .maybeSingle();
 
     if (parentErr) throw supabaseToError(parentErr);
@@ -142,6 +163,9 @@ export async function updatePage(input: {
   if (row.user_id !== user.uid) {
     throw new Error("Accès refusé");
   }
+  if (row.deleted_at) {
+    throw new Error("Page dans la corbeille : restaure-la avant de la modifier.");
+  }
 
   const patch: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
@@ -155,6 +179,7 @@ export async function updatePage(input: {
       .from("pages")
       .select("user_id, scope")
       .eq("id", input.parentId)
+      .is("deleted_at", null)
       .maybeSingle();
 
     if (parentErr) throw supabaseToError(parentErr);
@@ -182,20 +207,77 @@ export async function updatePage(input: {
   return rowToPage(data as PageRow);
 }
 
+/** Met la page à la corbeille (soft delete). */
 export async function deletePage(pageId: string) {
   const user = await requireUser();
   const supabase = createServiceRoleClient();
 
   const { data: existing, error: fetchErr } = await supabase
     .from("pages")
-    .select("user_id")
+    .select("user_id, deleted_at")
     .eq("id", pageId)
     .maybeSingle();
 
   if (fetchErr) throw supabaseToError(fetchErr);
   if (!existing) return;
-  if ((existing as { user_id: string }).user_id !== user.uid) {
+  const ex = existing as { user_id: string; deleted_at: string | null };
+  if (ex.user_id !== user.uid) {
     throw new Error("Accès refusé");
+  }
+  if (ex.deleted_at) return;
+
+  const { error } = await supabase
+    .from("pages")
+    .update({
+      deleted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", pageId)
+    .eq("user_id", user.uid);
+
+  if (error) throw supabaseToError(error);
+  revalidateAppNavigation();
+  revalidatePath(`/pages/${pageId}`);
+}
+
+export async function restorePage(pageId: string): Promise<Page> {
+  const user = await requireUser();
+  const supabase = createServiceRoleClient();
+
+  const { data, error } = await supabase
+    .from("pages")
+    .update({
+      deleted_at: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", pageId)
+    .eq("user_id", user.uid)
+    .select()
+    .single();
+
+  if (error) throw supabaseToError(error);
+  revalidateAppNavigation();
+  revalidatePath(`/pages/${pageId}`);
+  return rowToPage(data as PageRow);
+}
+
+/** Suppression définitive (corbeille uniquement). */
+export async function permanentDeletePage(pageId: string) {
+  const user = await requireUser();
+  const supabase = createServiceRoleClient();
+
+  const { data: existing, error: fetchErr } = await supabase
+    .from("pages")
+    .select("user_id, deleted_at")
+    .eq("id", pageId)
+    .maybeSingle();
+
+  if (fetchErr) throw supabaseToError(fetchErr);
+  if (!existing) return;
+  const ex = existing as { user_id: string; deleted_at: string | null };
+  if (ex.user_id !== user.uid) throw new Error("Accès refusé");
+  if (!ex.deleted_at) {
+    throw new Error("Utilise d’abord la corbeille pour supprimer la page.");
   }
 
   const { error } = await supabase

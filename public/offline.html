@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hors ligne — CraftNoteBox</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #e8eef8;
+        --fg: #0f172a;
+        --muted: #475569;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f172a;
+          --fg: #f1f5f9;
+          --muted: #94a3b8;
+        }
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        padding-top: max(1.5rem, env(safe-area-inset-top));
+        font-family: system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        text-align: center;
+      }
+      h1 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+      }
+      p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1>Pas de connexion</h1>
+      <p>
+        CraftNoteBox a besoin d’Internet pour charger tes pages. Vérifie le
+        réseau puis réessaie.
+      </p>
+    </div>
+  </body>
+</html>

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   Editor,
   Element as SlateElement,
@@ -10,6 +11,7 @@ import {
 } from "slate";
 import { ReactEditor, useSlate } from "slate-react";
 import type { RenderElementProps } from "slate-react";
+import RootBlockRow from "./RootBlockRow";
 
 function readToggleOpen(node: Node): boolean {
   if (!SlateElement.isElement(node)) return true;
@@ -21,7 +23,9 @@ export default function ToggleBlock({
   attributes,
   children,
   element,
-}: RenderElementProps) {
+  gutter,
+  rootDropPath,
+}: RenderElementProps & { gutter?: ReactNode; rootDropPath?: Path }) {
   const editor = useSlate();
 
   let open = readToggleOpen(element);
@@ -64,12 +68,10 @@ export default function ToggleBlock({
     }
   };
 
-  return (
-    <div
-      {...attributes}
-      className="my-2 rounded-md border border-transparent py-0.5"
-    >
-      <div className="flex items-start gap-2">
+  const inner = (
+    <div className="flex items-start gap-0.5 md:gap-1">
+      {gutter}
+      <div className="flex min-w-0 flex-1 items-start gap-2">
         <span contentEditable={false} className="select-none pt-0.5">
           <button
             type="button"
@@ -92,6 +94,27 @@ export default function ToggleBlock({
           {children}
         </div>
       </div>
+    </div>
+  );
+
+  if (rootDropPath && rootDropPath.length === 1) {
+    return (
+      <RootBlockRow
+        path={rootDropPath}
+        attributes={attributes}
+        className="group my-2 rounded-md border border-transparent py-0.5"
+      >
+        {inner}
+      </RootBlockRow>
+    );
+  }
+
+  return (
+    <div
+      {...attributes}
+      className="group my-2 rounded-md border border-transparent py-0.5"
+    >
+      {inner}
     </div>
   );
 }

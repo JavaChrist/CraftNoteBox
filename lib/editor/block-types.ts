@@ -12,6 +12,9 @@ export const BLOCK_TYPES: BlockType[] = [
   "divider",
   "toggle",
   "code",
+  "image",
+  "file",
+  "bookmark",
 ];
 
 export const SLASH_LABELS: Record<BlockType, string> = {
@@ -26,7 +29,15 @@ export const SLASH_LABELS: Record<BlockType, string> = {
   divider: "Séparateur",
   toggle: "Bloc repliable",
   code: "Code",
+  image: "Image",
+  file: "Fichier",
+  bookmark: "Aperçu de lien",
 };
 
 /** Blocs sans contenu éditable (void). */
-export const VOID_BLOCK_TYPES = new Set<BlockType>(["divider"]);
+export const VOID_BLOCK_TYPES = new Set<BlockType>([
+  "divider",
+  "image",
+  "file",
+  "bookmark",
+]);

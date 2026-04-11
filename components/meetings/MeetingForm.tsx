@@ -41,6 +41,7 @@ type Props = {
     startAt: string;
     endAt: string;
     pageIds: string[];
+    createMinutesPage: boolean;
   }) => Promise<void>;
   onCancel: () => void;
   submitting: boolean;
@@ -60,6 +61,7 @@ export default function MeetingForm({
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
   const [pageIds, setPageIds] = useState<string[]>([]);
+  const [createMinutesPage, setCreateMinutesPage] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -73,6 +75,7 @@ export default function MeetingForm({
       setStartTime("09:00");
       setEndTime("10:00");
       setPageIds([]);
+      setCreateMinutesPage(true);
       setError(null);
       return;
     }
@@ -109,6 +112,7 @@ export default function MeetingForm({
         startAt,
         endAt,
         pageIds,
+        createMinutesPage: editing ? true : createMinutesPage,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Échec de l’enregistrement");
@@ -209,6 +213,25 @@ export default function MeetingForm({
           disabled={submitting}
         />
       </div>
+
+      {!editing ? (
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/20 px-3 py-2.5">
+          <input
+            type="checkbox"
+            checked={createMinutesPage}
+            onChange={(e) => setCreateMinutesPage(e.target.checked)}
+            disabled={submitting}
+            className="mt-0.5 h-4 w-4 rounded border-input"
+          />
+          <span className="text-sm leading-snug text-foreground">
+            <span className="font-medium">Créer une page de compte rendu</span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              Page privée avec modèle (titre, date, contexte, participants…).
+              Décoche pour un simple rendez-vous dans l’agenda sans nouvelle page.
+            </span>
+          </span>
+        </label>
+      ) : null}
 
       <LinkedPagesField
         pages={pickablePages}

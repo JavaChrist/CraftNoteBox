@@ -1,8 +1,10 @@
 import { Element as SlateElement, Text, type Descendant } from "slate";
 import type { Block } from "@/lib/db/types";
 import type { BlockType } from "@/types/block";
+import { normalizeCodeLanguage } from "@/lib/editor/code-languages";
+import { isAllowedTextColor } from "@/lib/editor/text-color";
 
-const VOID_TYPES = new Set<BlockType>(["divider"]);
+const VOID_TYPES = new Set<BlockType>(["divider", "image", "file", "bookmark"]);
 
 /**
  * Garantit un arbre Slate valide (chaque bloc a au moins une feuille texte).
@@ -10,8 +12,14 @@ const VOID_TYPES = new Set<BlockType>(["divider"]);
  */
 function repairNode(raw: unknown, fallbackBlockType: BlockType): Descendant {
   if (Text.isText(raw)) {
-    const t = (raw as { text?: unknown }).text;
-    return { text: typeof t === "string" ? t : "" };
+    const o = raw as Record<string, unknown>;
+    const t = o.text;
+    const text = typeof t === "string" ? t : "";
+    const base: Record<string, unknown> = { text };
+    if (typeof o.color === "string" && isAllowedTextColor(o.color)) {
+      base.color = o.color.trim();
+    }
+    return base as Descendant;
   }
 
   if (!raw || typeof raw !== "object") {
@@ -23,7 +31,35 @@ function repairNode(raw: unknown, fallbackBlockType: BlockType): Descendant {
     typeof obj.type === "string" ? (obj.type as BlockType) : fallbackBlockType;
 
   if (VOID_TYPES.has(type)) {
-    return { type, children: [{ text: "" }] } as Descendant;
+    const voidBase: Record<string, unknown> = {
+      type,
+      children: [{ text: "" }],
+    };
+    if (type === "image") {
+      voidBase.url = typeof obj.url === "string" ? obj.url : "";
+      voidBase.alt = typeof obj.alt === "string" ? obj.alt : "";
+    }
+    if (type === "file") {
+      voidBase.url = typeof obj.url === "string" ? obj.url : "";
+      voidBase.fileName =
+        typeof obj.fileName === "string" ? obj.fileName : "";
+      if (typeof obj.mimeType === "string") voidBase.mimeType = obj.mimeType;
+      if (typeof obj.sizeBytes === "number" && Number.isFinite(obj.sizeBytes)) {
+        voidBase.sizeBytes = obj.sizeBytes;
+      }
+    }
+    if (type === "bookmark") {
+      voidBase.url = typeof obj.url === "string" ? obj.url : "";
+      if (typeof obj.ogTitle === "string") voidBase.ogTitle = obj.ogTitle;
+      if (typeof obj.ogDescription === "string") {
+        voidBase.ogDescription = obj.ogDescription;
+      }
+      if (typeof obj.ogImage === "string") voidBase.ogImage = obj.ogImage;
+      if (typeof obj.ogSiteName === "string") {
+        voidBase.ogSiteName = obj.ogSiteName;
+      }
+    }
+    return voidBase as Descendant;
   }
 
   const rawChildren = Array.isArray(obj.children) ? obj.children : [];
@@ -47,6 +83,11 @@ function repairNode(raw: unknown, fallbackBlockType: BlockType): Descendant {
       base.checked =
         typeof obj.checked === "boolean" ? obj.checked : false;
     }
+    if (type === "code") {
+      base.language = normalizeCodeLanguage(
+        typeof obj.language === "string" ? obj.language : undefined,
+      );
+    }
     return base as Descendant;
   }
 
@@ -54,6 +95,11 @@ function repairNode(raw: unknown, fallbackBlockType: BlockType): Descendant {
   if (type === "todo") {
     out.checked =
       typeof obj.checked === "boolean" ? obj.checked : false;
+  }
+  if (type === "code") {
+    out.language = normalizeCodeLanguage(
+      typeof obj.language === "string" ? obj.language : undefined,
+    );
   }
 
   return out as Descendant;

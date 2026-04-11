@@ -1,7 +1,8 @@
 "use client";
 
-import { FileText, Plus } from "lucide-react";
+import { FileText } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import SidebarCreatePageButton from "@/components/layout/SidebarCreatePageButton";
 import SidebarPageList from "@/components/layout/SidebarPageList";
 import SidebarSection from "@/components/layout/SidebarSection";
 import SidebarSectionMenu from "@/components/layout/SidebarSectionMenu";
@@ -11,13 +12,9 @@ const HIDDEN_KEY = "cnb-sidebar-private-hidden";
 
 type Props = {
   pages: Page[];
-  createPageAction: () => Promise<void>;
 };
 
-export default function SidebarPrivatePages({
-  pages,
-  createPageAction,
-}: Props) {
+export default function SidebarPrivatePages({ pages }: Props) {
   const [sectionHidden, setSectionHidden] = useState(false);
 
   useEffect(() => {
@@ -56,16 +53,7 @@ export default function SidebarPrivatePages({
       actions={
         sectionHidden ? undefined : (
           <>
-            <form action={createPageAction}>
-              <button
-                type="submit"
-                className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-                title="Nouvelle page"
-                aria-label="Créer une nouvelle page privée"
-              >
-                <Plus className="h-4 w-4" aria-hidden />
-              </button>
-            </form>
+            <SidebarCreatePageButton scope="private" variant="private" />
             <SidebarSectionMenu
               onHideSection={hideSection}
               sectionLabel="Pages privées"

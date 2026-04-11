@@ -12,4 +12,7 @@ export type BlockType =
   | "quote"
   | "divider"
   | "toggle"
-  | "code";
+  | "code"
+  | "image"
+  | "file"
+  | "bookmark";

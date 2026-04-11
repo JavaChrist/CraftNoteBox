@@ -34,14 +34,18 @@ async function assertPageOwnership(pageId: string, uid: string) {
   const supabase = createServiceRoleClient();
   const { data, error } = await supabase
     .from("pages")
-    .select("user_id")
+    .select("user_id, deleted_at")
     .eq("id", pageId)
     .maybeSingle();
 
   if (error) throw supabaseToError(error);
   if (!data) throw new Error("Page introuvable");
-  if ((data as { user_id: string }).user_id !== uid) {
+  const row = data as { user_id: string; deleted_at: string | null };
+  if (row.user_id !== uid) {
     throw new Error("Accès refusé");
+  }
+  if (row.deleted_at) {
+    throw new Error("Page dans la corbeille : restaure-la pour modifier le contenu.");
   }
 }
 

@@ -1,140 +1,122 @@
-# 🚀 CraftNoteBox
+# CraftNoteBox
 
 Application web personnelle d’organisation et de prise de notes, inspirée de Notion, avec pages hiérarchiques, éditeur par blocs, recherche globale et modules extensibles.
 
 ---
 
-## ✨ Fonctionnalités principales
+## Fonctionnalités principales
 
-- 🔐 Authentification sécurisée (Supabase)
-- 🧭 Navigation structurée type Notion (sidebar modulaire)
-- 📄 Pages privées hiérarchiques (sous-pages, expand/collapse)
-- ✍️ Éditeur riche basé sur Slate (blocs structurés)
-- ⚡ Slash menu (`/`) pour insertion rapide
-- 💾 Sauvegarde automatique des contenus
-- 🔎 Recherche globale (titres + contenu)
-- 🧱 Architecture modulaire (Accueil, Réunions, Inbox, Assistant)
+- Authentification (Supabase Auth)
+- Navigation type Notion : sidebar, pages **privées** et **PRO** (`scope`)
+- Éditeur riche **Slate** : texte, titres, listes, tâches, citation, séparateur, repliable, code avec coloration (**lowlight** / thème highlight.js)
+- **Médias** : blocs image, fichier et aperçu de lien (Open Graph), import via **API** `/api/media/upload` + bucket Supabase `page-media`
+- **Slash menu** (« + » ou transformation de blocs), positionnement adaptatif en bas de page
+- **Couleur** de texte par bloc, **suppression** de bloc depuis la gouttière
+- Sauvegarde automatique du contenu
+- Recherche globale (titres + contenu JSON des blocs)
+- **Réunions** : calendrier, création / édition, page de compte rendu **optionnelle**, pages liées
+- Corbeille (soft delete des pages), PWA / mode hors ligne (MVP selon config)
 
 ---
 
-## 📊 État d’avancement
+## État d’avancement
 
 | Zone | Statut | Détail |
 |------|--------|--------|
-| **Auth** | Fait | Connexion / déconnexion email + mot de passe (Supabase). Redirection vers `/login` si non connecté. Session gérée via `proxy.ts`. |
-| **Navigation** | Fait (MVP) | Sidebar avec liens fixes + section Pages privées (repliable, +, menu …). |
-| **Accueil** | Fait (MVP) | `/home` avec cartes d’accès aux modules. |
-| **Pages privées** | Fait | Création, hiérarchie (`parent_id`), expand/collapse. |
-| **Éditeur** | Fait | Slate : paragraph, headings, listes, todo, quote, divider, toggle, code. |
-| **Autosave** | Fait | Sauvegarde automatique (~800 ms). |
-| **Slash menu** | Fait | Insertion / transformation de blocs. |
-| **Recherche** | Fait (MVP) | `/search` via RPC SQL (`ILIKE` sur contenu JSON). |
-| **Réunions** | Fait (MVP) | `/meetings` : calendrier mensuel simple. |
-| **Boîte de réception** | Placeholder | `/inbox` (phase 2). |
-| **Assistant (IA)** | Placeholder | `/assistant` (phase 2). |
-| **Drag & drop** | Prévu | `@dnd-kit` installé mais non branché. |
-| **Collaboration** | Non prévu | Usage personnel uniquement. |
+| **Auth** | Fait | Email / mot de passe, middleware `proxy.ts`, `@supabase/ssr`. |
+| **Navigation** | Fait | Sidebar, pages privées + PRO, création, corbeille. |
+| **Éditeur** | Fait (MVP) | Blocs listés ci-dessous + médias + code ; voids (Enter / suppression). |
+| **Stockage fichiers** | Fait | `page-media` + `SUPABASE_SERVICE_ROLE_KEY` pour l’upload serveur. |
+| **Réunions** | Fait (MVP) | RDV avec ou sans page « … - Compte rendu ». |
+| **Recherche** | Fait | `/search`, RPC SQL. |
+| **Inbox / Assistant** | Placeholder | Routes présentes, contenu à venir. |
+| **Mail (inbox réelle)** | Prévu | Hors périmètre actuel ; à brancher plus tard. |
+| **Blocs enrichis** | À venir | Extensions futures dans le sélecteur de blocs. |
+| **Collaboration** | Non prévu | Usage personnel. |
 
 ---
 
-## 🧭 Parcours utilisateur
+## Parcours utilisateur
 
 | Route | Description |
 |-------|------------|
 | `/` | Redirection vers `/home` |
-| `/home` | Accueil (cartes modules) |
+| `/home` | Accueil |
 | `/login` | Connexion |
-| `/pages` | Vue sans page sélectionnée |
+| `/pages` | Liste / contexte pages |
 | `/pages/[pageId]` | Éditeur |
-| `/meetings` | Module réunions (MVP) |
-| `/inbox` | Inbox (placeholder) |
-| `/assistant` | IA (placeholder) |
-| `/search` | Recherche globale |
-| `/auth/callback` | Auth Supabase |
+| `/meetings` | Réunions / agenda |
+| `/inbox` | Placeholder |
+| `/assistant` | Placeholder |
+| `/search` | Recherche |
+| `/trash` | Corbeille (pages supprimées) |
+| `/auth/callback` | Callback Supabase |
 
 ---
 
-## 🧱 Stack technique
+## Stack technique
 
 | Couche | Techno |
 |--------|--------|
 | Framework | Next.js 16 (App Router) |
 | UI | React 19, TailwindCSS |
-| Éditeur | Slate.js |
-| Données | Supabase (PostgreSQL + Auth) |
-| Session | @supabase/ssr + proxy.ts |
-| Drag & drop | @dnd-kit (prévu) |
+| Éditeur | Slate.js, slate-history, lowlight |
+| Données | Supabase (PostgreSQL + Auth + Storage) |
+| Session | `@supabase/ssr` + `proxy.ts` |
 
 ---
 
-## 🗄️ Modèle de données
+## Modèle de données (aperçu)
 
 ### `pages`
 
-- `user_id`
-- `title`
-- `parent_id`
-- `icon`
-- `created_at`
-- `updated_at`
+- `user_id`, `title`, `parent_id`, `icon`, `scope` (`private` \| `pro`)
+- `deleted_at` (soft delete → corbeille)
 
 ### `blocks`
 
-- `page_id` (FK)
-- `user_id`
-- `type`
-- `content` (jsonb)
-- `order_index`
+- `page_id`, `user_id`, `type`, `content` (jsonb), `order_index`
 
-**Types de blocs :**  
-`paragraph`, `heading1`, `heading2`, `heading3`, `bulleted_list`, `numbered_list`, `todo`, `quote`, `divider`, `toggle`, `code`
+**Types de blocs persistés (racine) :**  
+`paragraph`, `heading1`–`heading3`, `bulleted_list`, `numbered_list`, `todo`, `quote`, `divider`, `toggle`, `code`, `image`, `file`, `bookmark`
+
+### Réunions
+
+- `meetings`, `meeting_pages`, `minutes_page_id` (nullable)
 
 ---
 
-## 🏗️ Structure du projet
+## Structure du projet (extrait)
 
 ```
 app/
-  (dashboard)/
-    home/
-    meetings/
-    inbox/
-    assistant/
-    pages/
-    search/
-  auth/
-
+  (dashboard)/    # home, pages, meetings, search, trash, …
+  api/            # ai, link-preview, media/upload
 components/
   editor/
-  layout/
-  home/
-  meetings/
-  inbox/
-  pages/
-
 lib/
   actions/
-  supabase/
   editor/
-  auth/
-
+  media/
+  supabase/
 proxy.ts
+supabase/migrations/
 ```
 
 ---
 
-## ⚙️ Installation
+## Installation
 
-```bash```
+```bash
 npm install
 npm run dev
 ```
 
 ---
 
-## 🔐 Configuration Supabase
+## Configuration Supabase
 
-Créer un fichier `.env.local` :
+Fichier `.env.local` :
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
@@ -142,38 +124,42 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 ```
 
-Voir aussi `.env.example` à la racine du dépôt.
+`SUPABASE_SERVICE_ROLE_KEY` est **obligatoire** pour les Server Actions (blocs, pages, **upload média**). Voir `.env.example`.
 
 ---
 
-## 🧪 Base de données
+## Migrations SQL
 
-Exécuter les migrations dans l’ordre (SQL Editor Supabase) :
+À exécuter dans l’ordre sur le projet Supabase (SQL Editor ou CLI) :
 
-- `supabase/migrations/20260408000000_init.sql`
-- `supabase/migrations/20260410000000_global_search.sql`
-
----
-
-## 🚧 Prochaines étapes
-
-- Drag & drop des blocs
-- Amélioration UX sidebar (menu section avancé)
-- Module Réunions complet (création d’événements)
-- Boîte de réception (e-mails)
-- Assistant IA
-- Favoris / pages épinglées
+1. `20260408000000_init.sql`
+2. `20260410000000_global_search.sql`
+3. `20260411000000_page_scope.sql`
+4. `20260412000000_meetings.sql`
+5. `20260413000000_meetings_minutes_page.sql`
+6. `20260415000000_pages_soft_delete.sql`
+7. `20260416000000_page_media_storage.sql` (bucket `page-media`)
+8. `20260417000000_storage_rls_split_part.sql` (politiques storage, optionnel mais recommandé)
 
 ---
 
-## 🛡️ Sécurité
+## Prochaines étapes (feuille de route)
 
-- Accès serveur via `service_role` uniquement côté Server Actions
-- Filtrage systématique par `user_id`
-- Ne jamais exposer `SUPABASE_SERVICE_ROLE_KEY` ni `.env.local`
+- Enrichir le **sélecteur de blocs** (nouveaux types, mise en page)
+- **Module mail** / boîte de réception fonctionnelle
+- Améliorations UX (drag & drop blocs, sidebar, etc.)
+- Assistant IA opérationnel sur `/assistant`
 
 ---
 
-## 📄 Licence
+## Sécurité
+
+- `service_role` uniquement côté serveur (actions, routes API sensibles)
+- Filtre systématique par `user_id`
+- Ne jamais committer `.env.local` ni la clé `service_role`
+
+---
+
+## Licence
 
 MIT (voir `package.json`).
