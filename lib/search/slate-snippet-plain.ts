@@ -14,11 +14,39 @@ function extractFromNode(node: unknown): string {
     return node.map(extractFromNode).filter(Boolean).join(" ");
   }
   const n = node as Record<string, unknown>;
-  if (typeof n.text === "string") return n.text;
-  if (Array.isArray(n.children)) {
-    return n.children.map(extractFromNode).filter(Boolean).join("");
+  const bits: string[] = [];
+  if (typeof n.text === "string") bits.push(n.text);
+  for (const key of ["url", "alt", "fileName", "ogTitle", "ogDescription", "pageTitle", "icon"]) {
+    if (typeof n[key] === "string") bits.push(n[key]);
   }
-  return "";
+  if (Array.isArray(n.headers)) bits.push(extractFromNode(n.headers));
+  if (Array.isArray(n.rows)) bits.push(extractFromNode(n.rows));
+  if (Array.isArray(n.chartPoints)) {
+    bits.push(
+      n.chartPoints
+        .map((point) =>
+          point && typeof point === "object"
+            ? `${(point as { label?: unknown }).label ?? ""} ${(point as { value?: unknown }).value ?? ""}`
+            : "",
+        )
+        .join(" "),
+    );
+  }
+  if (Array.isArray(n.dbRows)) {
+    bits.push(
+      n.dbRows
+        .map((row) =>
+          row && typeof row === "object"
+            ? Object.values((row as { cells?: Record<string, unknown> }).cells ?? {})
+                .filter((value) => typeof value === "string")
+                .join(" ")
+            : "",
+        )
+        .join(" "),
+    );
+  }
+  if (Array.isArray(n.children)) bits.push(n.children.map(extractFromNode).join(""));
+  return bits.filter(Boolean).join(" ");
 }
 
 /** Si le JSON est tronqué, tente quand même de récupérer les champs "text". */

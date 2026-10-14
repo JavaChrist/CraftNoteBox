@@ -13,6 +13,7 @@ import {
   DEFAULT_CODE_LANGUAGE,
   normalizeCodeLanguage,
 } from "@/lib/editor/code-languages";
+import type { SlashBlockPreset } from "@/types/block";
 import { createDefaultBlock } from "@/lib/blocks/schema";
 import { VOID_BLOCK_TYPES } from "@/lib/editor/block-types";
 
@@ -26,6 +27,17 @@ const MEDIA_NODE_KEYS = [
   "ogDescription",
   "ogImage",
   "ogSiteName",
+  "icon",
+  "tone",
+  "pageId",
+  "pageTitle",
+  "headers",
+  "rows",
+  "view",
+  "dbColumns",
+  "dbRows",
+  "chartKind",
+  "chartPoints",
 ] as const;
 
 function unsetMediaNodeProps(editor: EditorType, at: Path): void {
@@ -41,6 +53,8 @@ const DEMOTE_AT_START_TYPES = new Set<string>([
   "todo",
   "quote",
   "code",
+  "callout",
+  "text_zone",
 ]);
 
 function blockIsEmpty(editor: EditorType, path: Path): boolean {
@@ -92,13 +106,14 @@ export function setBlockTypeFromSlash(
   editor: EditorType,
   blockPath: Path,
   blockType: BlockType,
+  preset?: SlashBlockPreset,
 ): void {
   if (VOID_BLOCK_TYPES.has(blockType)) {
     Transforms.removeNodes(editor, { at: blockPath });
     Transforms.insertNodes(
       editor,
       [
-        createDefaultBlock(blockType) as Node,
+        createDefaultBlock(blockType, preset) as Node,
         { type: "paragraph", children: [{ text: "" }] } as Node,
       ],
       { at: blockPath },
@@ -129,7 +144,19 @@ export function setBlockTypeFromSlash(
     return;
   }
 
-  if (blockType === "code") {
+  if (blockType === "callout") {
+    Transforms.setNodes(
+      editor,
+      { type: "callout", icon: "💡", tone: "note" } as object,
+      { at: blockPath },
+    );
+    unsetMediaNodeProps(editor, blockPath);
+    Transforms.setNodes(
+      editor,
+      { icon: "💡", tone: "note" } as object,
+      { at: blockPath },
+    );
+  } else if (blockType === "code") {
     Transforms.setNodes(
       editor,
       { type: "code", language: DEFAULT_CODE_LANGUAGE } as object,
@@ -159,8 +186,27 @@ export function setBlockTypeFromSlash(
 /**
  * Comportements Enter / Backspace / voids pour blocs racine type Notion (MVP).
  */
+function selectionInTextZone(editor: EditorType): boolean {
+  const { selection } = editor;
+  if (!selection) return false;
+  const match = Editor.above(editor, {
+    at: selection,
+    match: (node) => SlateElement.isElement(node) && node.type === "text_zone",
+  });
+  return Boolean(match);
+}
+
 export function withBlockEditor<T extends EditorType>(editor: T): T {
-  const { insertBreak, deleteBackward, normalizeNode, isVoid } = editor;
+  const { insertBreak, insertData, deleteBackward, normalizeNode, isVoid } = editor;
+
+  editor.insertData = (data) => {
+    const text = data.getData("text/plain");
+    if (text && selectionInTextZone(editor)) {
+      editor.insertText(text.replace(/\r\n/g, "\n"));
+      return;
+    }
+    insertData(data);
+  };
 
   editor.isVoid = (element) => {
     if (
@@ -190,6 +236,18 @@ export function withBlockEditor<T extends EditorType>(editor: T): T {
             editor,
             { type: "paragraph", children: [{ text: "" }] } as Node,
             { at: path.concat(0) },
+          );
+          return;
+        }
+      }
+      if (node.type === "callout") {
+        const icon = (node as { icon?: string }).icon;
+        const tone = (node as { tone?: string }).tone;
+        if (!icon || !tone) {
+          Transforms.setNodes(
+            editor,
+            { icon: icon || "💡", tone: tone || "note" } as object,
+            { at: path },
           );
           return;
         }
@@ -233,6 +291,32 @@ export function withBlockEditor<T extends EditorType>(editor: T): T {
         { at: next },
       );
       Transforms.select(editor, Editor.start(editor, next));
+      return;
+    }
+
+    if (SlateElement.isElement(el) && el.type === "text_zone") {
+      if (Range.isCollapsed(selection)) {
+        const atEnd = Editor.isEnd(editor, selection.anchor, path);
+        const value = Node.string(el);
+        if (atEnd && (value.length === 0 || value.endsWith("\n"))) {
+          if (value.endsWith("\n")) {
+            Transforms.delete(editor, {
+              distance: 1,
+              unit: "character",
+              reverse: true,
+            });
+          }
+          const next = Path.next(path);
+          Transforms.insertNodes(
+            editor,
+            { type: "paragraph", children: [{ text: "" }] } as Node,
+            { at: next },
+          );
+          Transforms.select(editor, Editor.start(editor, next));
+          return;
+        }
+      }
+      Transforms.insertText(editor, "\n");
       return;
     }
 
@@ -385,6 +469,8 @@ export function withBlockEditor<T extends EditorType>(editor: T): T {
       });
       Transforms.unsetNodes(editor, "checked", { at: path });
       Transforms.unsetNodes(editor, "open", { at: path });
+      Transforms.unsetNodes(editor, "language", { at: path });
+      unsetMediaNodeProps(editor, path);
       return;
     }
 
@@ -392,4 +478,29 @@ export function withBlockEditor<T extends EditorType>(editor: T): T {
   };
 
   return editor;
+}
+
+/** Remplace un bloc racine par les nœuds importés (fichier Markdown ou CSV). */
+export function replaceRootWithNodes(
+  editor: EditorType,
+  blockPath: Path,
+  nodes: Node[],
+): void {
+  if (blockPath.length !== 1) return;
+  try {
+    Node.get(editor, blockPath);
+  } catch {
+    return;
+  }
+  const safe =
+    nodes.length > 0
+      ? nodes
+      : ([{ type: "paragraph", children: [{ text: "" }] }] as Node[]);
+  Transforms.removeNodes(editor, { at: blockPath });
+  Transforms.insertNodes(editor, safe, { at: blockPath });
+  try {
+    Transforms.select(editor, Editor.start(editor, blockPath));
+  } catch {
+    /* document encore en normalisation */
+  }
 }

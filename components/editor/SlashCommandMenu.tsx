@@ -9,7 +9,7 @@ import {
 import { createPortal } from "react-dom";
 import { ReactEditor, useSlate } from "slate-react";
 import type { SlashMenuState } from "@/lib/editor/slash-commands";
-import type { BlockType } from "@/lib/db/types";
+import type { BlockType, SlashBlockPreset } from "@/lib/db/types";
 import type { AiAction } from "@/lib/ai/types";
 
 type Props = {
@@ -17,7 +17,8 @@ type Props = {
   /** Index parmi les entrées sélectionnables uniquement (blocs réels). */
   selectedSelectableIndex: number;
   onFilterChange: (filter: string) => void;
-  onSelectBlock: (type: BlockType) => void;
+  onSelectBlock: (type: BlockType, preset?: SlashBlockPreset) => void;
+  onSelectCommand?: (command: "import") => void;
   onSelectJavaChrist?: (action: AiAction) => void;
 };
 
@@ -26,6 +27,7 @@ export default function SlashCommandMenu({
   selectedSelectableIndex,
   onFilterChange,
   onSelectBlock,
+  onSelectCommand,
   onSelectJavaChrist,
 }: Props) {
   const editor = useSlate();
@@ -152,28 +154,29 @@ export default function SlashCommandMenu({
             );
           }
 
-          if (row.kind === "soon") {
+          if (row.kind === "command") {
+            const order = selectableRowIndices.indexOf(rowIndex);
+            const isSelected = order === selectedSelectableIndex;
             const Icon = row.Icon;
             return (
-              <div
+              <button
                 key={row.key}
-                className="flex cursor-not-allowed items-center gap-2.5 rounded-lg px-2 py-2 text-left opacity-50"
-                role="presentation"
-                aria-disabled
+                type="button"
+                data-slash-order={order}
+                role="option"
+                aria-selected={isSelected}
+                className={`flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm transition ${
+                  isSelected
+                    ? "bg-accent text-accent-foreground"
+                    : "hover:bg-muted/80"
+                }`}
+                onClick={() => onSelectCommand?.(row.command)}
               >
-                <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm">{row.label}</div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {row.hint}
-                  </div>
-                </div>
-                {row.shortcut ? (
-                  <kbd className="hidden shrink-0 rounded border border-border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">
-                    {row.shortcut}
-                  </kbd>
-                ) : null}
-              </div>
+                <Icon
+                  className={`h-4 w-4 shrink-0 ${isSelected ? "" : "text-muted-foreground"}`}
+                />
+                <span className="min-w-0 flex-1 font-medium">{row.label}</span>
+              </button>
             );
           }
 
@@ -239,7 +242,7 @@ export default function SlashCommandMenu({
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-muted/80"
               }`}
-              onClick={() => onSelectBlock(row.type)}
+              onClick={() => onSelectBlock(row.type, row.preset)}
             >
               <Icon
                 className={`h-4 w-4 shrink-0 ${isSelected ? "" : "text-muted-foreground"}`}

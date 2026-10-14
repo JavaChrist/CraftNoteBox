@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   CalendarDays,
   Home,
-  Inbox,
   Search,
   Sparkles,
   Trash2,
@@ -15,7 +14,6 @@ const items = [
   { href: "/home", label: "Accueil", icon: Home },
   { href: "/meetings", label: "Réunions", icon: CalendarDays },
   { href: "/assistant", label: "JavaChrist", icon: Sparkles },
-  { href: "/inbox", label: "Boîte de réception", icon: Inbox },
   { href: "/search", label: "Rechercher", icon: Search },
   { href: "/trash", label: "Corbeille", icon: Trash2 },
 ] as const;

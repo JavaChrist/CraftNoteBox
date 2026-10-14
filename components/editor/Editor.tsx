@@ -43,7 +43,12 @@ import { createAutosave } from "@/lib/utils/autosave";
 import type { Block, BlockType, Page } from "@/lib/db/types";
 import { SaveStatusLine } from "@/components/ui/save-status-line";
 import { moveRootBlockBefore } from "@/lib/editor/move-root-block";
-import { withBlockEditor } from "@/lib/editor/transforms";
+import {
+  parseCsvToTableNode,
+  parseMarkdownToSlateNodes,
+} from "@/lib/editor/rich-blocks";
+import { replaceRootWithNodes, withBlockEditor } from "@/lib/editor/transforms";
+import type { SlashBlockPreset } from "@/types/block";
 import { blocksToSlateValue } from "@/lib/editor/slate-value";
 import { decorationsForCodeBlock } from "@/lib/editor/code-decorations";
 import { isAllowedTextColor } from "@/lib/editor/text-color";
@@ -101,6 +106,8 @@ function EditorInner({ page, initialBlocks, onSave }: Props) {
   } | null>(null);
   const slashMenuRef = useRef<SlashMenuState | null>(null);
   const slashIndexRef = useRef(0);
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const importPathRef = useRef<Path | null>(null);
   slashMenuRef.current = slashMenu;
   slashIndexRef.current = slashIndex;
 
@@ -338,9 +345,13 @@ function EditorInner({ page, initialBlocks, onSave }: Props) {
         const rowIdx = menu.selectableRowIndices[order];
         const row = rowIdx !== undefined ? menu.rows[rowIdx] : undefined;
         if (row?.kind === "block") {
-          applySlashCommand(editor, menu, row.type);
+          applySlashCommand(editor, menu, row.type, row.preset);
           setSlashMenu(null);
           ReactEditor.focus(editor);
+        } else if (row?.kind === "command" && row.command === "import") {
+          importPathRef.current = menu.blockPath;
+          setSlashMenu(null);
+          importInputRef.current?.click();
         } else if (row?.kind === "javachrist") {
           dismissSlashText(editor, menu);
           setSlashMenu(null);
@@ -358,11 +369,48 @@ function EditorInner({ page, initialBlocks, onSave }: Props) {
   }, [slashMenu, editor, runJavaChrist]);
 
   const applySlash = useCallback(
-    (blockType: BlockType) => {
+    (blockType: BlockType, preset?: SlashBlockPreset) => {
       const state = slashMenuRef.current;
       if (!state) return;
-      applySlashCommand(editor, state, blockType);
+      applySlashCommand(editor, state, blockType, preset);
       setSlashMenu(null);
+      ReactEditor.focus(editor);
+    },
+    [editor],
+  );
+
+  const startImport = useCallback(() => {
+    const state = slashMenuRef.current;
+    if (!state) return;
+    importPathRef.current = state.blockPath;
+    setSlashMenu(null);
+    importInputRef.current?.click();
+  }, []);
+
+  const onImportFile = useCallback(
+    async (file: File | null) => {
+      const path = importPathRef.current;
+      importPathRef.current = null;
+      if (!file || !path) return;
+      if (file.size > 1024 * 1024) {
+        setError("Fichier trop volumineux pour l’import (max 1 Mo).");
+        return;
+      }
+      let text = "";
+      try {
+        text = await file.text();
+      } catch {
+        setError("Impossible de lire ce fichier.");
+        return;
+      }
+      const name = file.name.toLowerCase();
+      const nodes =
+        name.endsWith(".csv")
+          ? [parseCsvToTableNode(text)]
+          : parseMarkdownToSlateNodes(text);
+      replaceRootWithNodes(editor, path, nodes);
+      setError(null);
+      setDirty(true);
       ReactEditor.focus(editor);
     },
     [editor],
@@ -416,11 +464,27 @@ function EditorInner({ page, initialBlocks, onSave }: Props) {
               onClose={() => setColorPopover(null)}
             />
           ) : null}
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".md,.markdown,.txt,.csv,text/plain,text/markdown,text/csv"
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0] ?? null;
+              event.target.value = "";
+              void onImportFile(file);
+            }}
+          />
           <SlashCommandMenu
             state={slashMenu}
             selectedSelectableIndex={slashIndex}
             onFilterChange={updateSlashFilter}
             onSelectBlock={applySlash}
+            onSelectCommand={(command) => {
+              if (command === "import") startImport();
+            }}
             onSelectJavaChrist={(action) => {
               const m = slashMenuRef.current;
               if (m) {

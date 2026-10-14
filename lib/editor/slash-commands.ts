@@ -7,7 +7,7 @@ import {
   type Editor as EditorType,
   type Point,
 } from "slate";
-import type { BlockType } from "@/types/block";
+import type { BlockType, SlashBlockPreset } from "@/types/block";
 import {
   buildSlashMenuRows,
   type SlashMenuRow,
@@ -64,6 +64,7 @@ export function applySlashCommand(
   editor: EditorType,
   state: SlashMenuState,
   blockType: BlockType,
+  preset?: SlashBlockPreset,
 ): void {
   const { blockPath, slashPoint, queryEnd } = state;
 
@@ -79,7 +80,7 @@ export function applySlashCommand(
   });
   Transforms.delete(editor);
 
-  setBlockTypeFromSlash(editor, blockPath, blockType);
+  setBlockTypeFromSlash(editor, blockPath, blockType, preset);
 }
 
 /** Fermeture du menu sans supprimer de texte (le « / » n’est plus utilisé). */

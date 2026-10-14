@@ -1,7 +1,15 @@
 import type { BaseEditor } from "slate";
 import type { ReactEditor } from "slate-react";
 import type { HistoryEditor } from "slate-history";
-import type { BlockType } from "./block";
+import type {
+  BlockType,
+  CalloutTone,
+  ChartKind,
+  ChartPoint,
+  DbColumn,
+  DbRow,
+  DbView,
+} from "./block";
 
 export type SlateText = { text: string; color?: string };
 
@@ -24,6 +32,22 @@ export type SlateBlockElement = {
   ogDescription?: string;
   ogImage?: string;
   ogSiteName?: string;
+  /** Bloc `callout`. */
+  icon?: string;
+  tone?: CalloutTone;
+  /** Blocs `page_link` et `page_embed`. */
+  pageId?: string;
+  pageTitle?: string;
+  /** Bloc `table`. */
+  headers?: string[];
+  rows?: string[][];
+  /** Bloc `database`. */
+  view?: DbView;
+  dbColumns?: DbColumn[];
+  dbRows?: DbRow[];
+  /** Bloc `chart`. */
+  chartKind?: ChartKind;
+  chartPoints?: ChartPoint[];
 };
 
 declare module "slate" {

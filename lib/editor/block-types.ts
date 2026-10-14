@@ -5,6 +5,7 @@ export const BLOCK_TYPES: BlockType[] = [
   "heading1",
   "heading2",
   "heading3",
+  "text_zone",
   "bulleted_list",
   "numbered_list",
   "todo",
@@ -15,6 +16,15 @@ export const BLOCK_TYPES: BlockType[] = [
   "image",
   "file",
   "bookmark",
+  "video",
+  "audio",
+  "callout",
+  "table",
+  "page_link",
+  "page_embed",
+  "embed",
+  "database",
+  "chart",
 ];
 
 export const SLASH_LABELS: Record<BlockType, string> = {
@@ -22,6 +32,7 @@ export const SLASH_LABELS: Record<BlockType, string> = {
   heading1: "Titre 1",
   heading2: "Titre 2",
   heading3: "Titre 3",
+  text_zone: "Zone de texte",
   bulleted_list: "Liste à puces",
   numbered_list: "Liste numérotée",
   todo: "À faire",
@@ -32,6 +43,15 @@ export const SLASH_LABELS: Record<BlockType, string> = {
   image: "Image",
   file: "Fichier",
   bookmark: "Aperçu de lien",
+  video: "Vidéo",
+  audio: "Audio",
+  callout: "Encadré",
+  table: "Tableau",
+  page_link: "Lien vers une page",
+  page_embed: "Page",
+  embed: "Intégration",
+  database: "Base de données",
+  chart: "Graphique",
 };
 
 /** Blocs sans contenu éditable (void). */
@@ -40,4 +60,12 @@ export const VOID_BLOCK_TYPES = new Set<BlockType>([
   "image",
   "file",
   "bookmark",
+  "video",
+  "audio",
+  "table",
+  "page_link",
+  "page_embed",
+  "embed",
+  "database",
+  "chart",
 ]);

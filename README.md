@@ -29,8 +29,7 @@ Application web personnelle d’organisation et de prise de notes, inspirée de 
 | **Stockage fichiers** | Fait | `page-media` + `SUPABASE_SERVICE_ROLE_KEY` pour l’upload serveur. |
 | **Réunions** | Fait (MVP) | RDV avec ou sans page « … - Compte rendu ». |
 | **Recherche** | Fait | `/search`, RPC SQL. |
-| **Inbox / Assistant** | Placeholder | Routes présentes, contenu à venir. |
-| **Mail (inbox réelle)** | Prévu | Hors périmètre actuel ; à brancher plus tard. |
+| **Assistant** | Placeholder | Route présente, contenu à venir. |
 | **Blocs enrichis** | À venir | Extensions futures dans le sélecteur de blocs. |
 | **Collaboration** | Non prévu | Usage personnel. |
 
@@ -46,7 +45,6 @@ Application web personnelle d’organisation et de prise de notes, inspirée de 
 | `/pages` | Liste / contexte pages |
 | `/pages/[pageId]` | Éditeur |
 | `/meetings` | Réunions / agenda |
-| `/inbox` | Placeholder |
 | `/assistant` | Placeholder |
 | `/search` | Recherche |
 | `/trash` | Corbeille (pages supprimées) |
@@ -146,7 +144,6 @@ SUPABASE_SERVICE_ROLE_KEY=
 ## Prochaines étapes (feuille de route)
 
 - Enrichir le **sélecteur de blocs** (nouveaux types, mise en page)
-- **Module mail** / boîte de réception fonctionnelle
 - Améliorations UX (drag & drop blocs, sidebar, etc.)
 - Assistant IA opérationnel sur `/assistant`
 

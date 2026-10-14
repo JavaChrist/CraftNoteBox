@@ -3,6 +3,7 @@ import "highlight.js/styles/github-dark.css";
 import "./globals.css";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import PwaRegister from "@/components/pwa/PwaRegister";
+import UpdateBanner from "@/components/system/UpdateBanner";
 import { themeInitScript } from "@/lib/theme-inline-script";
 import {
   BRAND_APPLE_TOUCH,
@@ -53,6 +54,7 @@ export default function RootLayout({
       </head>
       <body className="bg-background text-foreground antialiased">
         <PwaRegister />
+        <UpdateBanner initialVersion={process.env.VERCEL_GIT_COMMIT_SHA ?? "dev"} />
         <div className="fixed right-[max(0.75rem,env(safe-area-inset-right,0px))] top-[max(0.75rem,env(safe-area-inset-top,0px))] z-[100] sm:right-4 sm:top-4">
           <ThemeToggle />
         </div>

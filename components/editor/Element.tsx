@@ -1,11 +1,18 @@
 "use client";
 
-import type { Path } from "slate";
+import { Node, type Path } from "slate";
 import { useSlateStatic, type RenderElementProps } from "slate-react";
 import BlockGutter from "./BlockGutter";
+import { CalloutBody } from "./CalloutBlock";
+import ChartBlock from "./ChartBlock";
 import CodeBlock from "./CodeBlock";
+import DatabaseBlock from "./DatabaseBlock";
+import EmbedBlock from "./EmbedBlock";
 import { BookmarkBlock, FileBlock, ImageBlock } from "./MediaBlocks";
+import { PageEmbedBlock, PageLinkBlock } from "./PageRefBlocks";
+import { AudioBlock, VideoBlock } from "./PlaybackBlocks";
 import RootBlockRow from "./RootBlockRow";
+import TableBlock from "./TableBlock";
 import { TodoBlockBody } from "./TodoBlock";
 import ToggleBlock from "./ToggleBlock";
 import { findElementPathInEditor } from "@/lib/editor/find-element-path";
@@ -171,6 +178,43 @@ export default function Element(props: RenderElementProps) {
       return (
         <HeadingBlock {...props} level={3} gutter={gutter} rootPath={rootPath} />
       );
+    case "text_zone": {
+      const empty = Node.string(element) === "";
+      const inner = (
+        <>
+          {gutter}
+          <div className="relative min-w-0 flex-1">
+            {empty ? (
+              <span
+                contentEditable={false}
+                className="pointer-events-none absolute left-3 top-2 text-muted-foreground"
+              >
+                Colle ou écris un texte…
+              </span>
+            ) : null}
+            <div className="min-h-[5.5rem] whitespace-pre-wrap break-words rounded-md border border-border bg-card px-3 py-2 leading-7">
+              {children}
+            </div>
+          </div>
+        </>
+      );
+      return rootPath ? (
+        <RootBlockRow
+          path={rootPath}
+          attributes={attributes}
+          className="group flex items-start gap-0.5 py-0.5 md:gap-1"
+        >
+          {inner}
+        </RootBlockRow>
+      ) : (
+        <div
+          {...attributes}
+          className="group flex items-start gap-0.5 py-0.5 md:gap-1"
+        >
+          {inner}
+        </div>
+      );
+    }
     case "bulleted_list": {
       const inner = (
         <>
@@ -235,6 +279,30 @@ export default function Element(props: RenderElementProps) {
           <div className="flex min-w-0 flex-1 items-start gap-2 py-0.5">
             <TodoBlockBody element={element}>{children}</TodoBlockBody>
           </div>
+        </>
+      );
+      return rootPath ? (
+        <RootBlockRow
+          path={rootPath}
+          attributes={attributes}
+          className="group flex items-start gap-0.5 py-0.5 md:gap-1"
+        >
+          {inner}
+        </RootBlockRow>
+      ) : (
+        <div
+          {...attributes}
+          className="group flex items-start gap-0.5 py-0.5 md:gap-1"
+        >
+          {inner}
+        </div>
+      );
+    }
+    case "callout": {
+      const inner = (
+        <>
+          {gutter}
+          <CalloutBody element={element}>{children}</CalloutBody>
         </>
       );
       return rootPath ? (
@@ -330,6 +398,50 @@ export default function Element(props: RenderElementProps) {
           gutter={gutter}
           rootDropPath={rootPath ?? undefined}
         />
+      );
+    case "video":
+      return (
+        <VideoBlock {...props} gutter={gutter} rootDropPath={rootPath ?? undefined} />
+      );
+    case "audio":
+      return (
+        <AudioBlock {...props} gutter={gutter} rootDropPath={rootPath ?? undefined} />
+      );
+    case "table":
+      return (
+        <TableBlock {...props} gutter={gutter} rootDropPath={rootPath ?? undefined} />
+      );
+    case "page_link":
+      return (
+        <PageLinkBlock
+          {...props}
+          gutter={gutter}
+          rootDropPath={rootPath ?? undefined}
+        />
+      );
+    case "page_embed":
+      return (
+        <PageEmbedBlock
+          {...props}
+          gutter={gutter}
+          rootDropPath={rootPath ?? undefined}
+        />
+      );
+    case "embed":
+      return (
+        <EmbedBlock {...props} gutter={gutter} rootDropPath={rootPath ?? undefined} />
+      );
+    case "database":
+      return (
+        <DatabaseBlock
+          {...props}
+          gutter={gutter}
+          rootDropPath={rootPath ?? undefined}
+        />
+      );
+    case "chart":
+      return (
+        <ChartBlock {...props} gutter={gutter} rootDropPath={rootPath ?? undefined} />
       );
     case "paragraph":
       return (

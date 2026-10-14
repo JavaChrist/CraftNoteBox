@@ -1,6 +1,6 @@
-import type { BlockType } from "@/types/block";
+import type { BlockType, SlashBlockPreset } from "@/types/block";
 
-export type { BlockType };
+export type { BlockType, SlashBlockPreset };
 
 /** Pages privées (sidebar) vs pages PRO (même éditeur et routes `/pages/[id]`). */
 export type PageScope = "private" | "pro";

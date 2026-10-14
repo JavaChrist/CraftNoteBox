@@ -29,11 +29,12 @@ import {
   Plug,
   Quote,
   Table2,
+  TextCursorInput,
   Type,
   Video,
   Volume2,
 } from "lucide-react";
-import type { BlockType } from "@/types/block";
+import type { BlockType, SlashBlockPreset } from "@/types/block";
 import type { AiAction } from "@/lib/ai/types";
 import { filterJavaChristMenuEntries } from "@/lib/ai/actions";
 
@@ -45,15 +46,15 @@ export type SlashMenuRow =
       type: BlockType;
       label: string;
       shortcut?: string;
+      preset?: SlashBlockPreset;
       Icon: LucideIcon;
     }
   | {
-      kind: "soon";
+      kind: "command";
       key: string;
+      command: "import";
       label: string;
-      shortcut?: string;
       Icon: LucideIcon;
-      hint: string;
     }
   | {
       kind: "javachrist";
@@ -70,24 +71,23 @@ type BlockEntry = {
   type: BlockType;
   label: string;
   shortcut?: string;
+  preset?: SlashBlockPreset;
   Icon: LucideIcon;
   keywords?: string[];
 };
 
-type SoonEntry = {
-  action: "soon";
-  id: string;
+type CommandEntry = {
+  action: "command";
+  id: "import";
   label: string;
-  shortcut?: string;
   Icon: LucideIcon;
-  hint: string;
   keywords?: string[];
 };
 
 type Section = {
   id: string;
   title: string;
-  entries: Array<BlockEntry | SoonEntry>;
+  entries: Array<BlockEntry | CommandEntry>;
 };
 
 function normalize(s: string): string {
@@ -97,7 +97,7 @@ function normalize(s: string): string {
     .replace(/\p{M}/gu, "");
 }
 
-/** Sections façon Notion — seuls les `block` sont insérables ; `soon` = feuille de route MVP. */
+/** Sections façon Notion — chaque entrée insère un bloc ou lance une commande. */
 export const SLASH_MENU_SECTIONS: Section[] = [
   {
     id: "basic",
@@ -137,6 +137,13 @@ export const SLASH_MENU_SECTIONS: Section[] = [
       },
       {
         action: "block",
+        type: "text_zone",
+        label: "Zone de texte",
+        Icon: TextCursorInput,
+        keywords: ["coller", "paste", "textarea", "paragraphe", "texte long"],
+      },
+      {
+        action: "block",
         type: "bulleted_list",
         label: "Liste à puces",
         shortcut: "-",
@@ -173,19 +180,18 @@ export const SLASH_MENU_SECTIONS: Section[] = [
         keywords: ["photo", "img"],
       },
       {
-        action: "soon",
-        id: "video",
+        action: "block",
+        type: "video",
         label: "Vidéo",
         Icon: Video,
-        hint: "Bientôt",
+        keywords: ["youtube", "vimeo", "mp4"],
       },
       {
-        action: "soon",
-        id: "audio",
+        action: "block",
+        type: "audio",
         label: "Audio",
         Icon: Volume2,
-        hint: "Bientôt",
-        keywords: ["son"],
+        keywords: ["son", "mp3"],
       },
       {
         action: "block",
@@ -215,83 +221,92 @@ export const SLASH_MENU_SECTIONS: Section[] = [
     title: "Base de données",
     entries: [
       {
-        action: "soon",
-        id: "db-table",
+        action: "block",
+        type: "database",
+        preset: { view: "table" },
         label: "Vue « table »",
         Icon: Table2,
-        hint: "Hors MVP",
-        keywords: ["database"],
+        keywords: ["database", "base"],
       },
       {
-        action: "soon",
-        id: "db-kanban",
+        action: "block",
+        type: "database",
+        preset: { view: "kanban" },
         label: "Vue « tableau kanban »",
         Icon: LayoutGrid,
-        hint: "Hors MVP",
+        keywords: ["kanban"],
       },
       {
-        action: "soon",
-        id: "db-gallery",
+        action: "block",
+        type: "database",
+        preset: { view: "gallery" },
         label: "Vue « galerie »",
         Icon: LayoutGrid,
-        hint: "Hors MVP",
+        keywords: ["galerie"],
       },
       {
-        action: "soon",
-        id: "db-list",
+        action: "block",
+        type: "database",
+        preset: { view: "list" },
         label: "Vue « liste »",
         Icon: List,
-        hint: "Hors MVP",
+        keywords: ["liste"],
       },
       {
-        action: "soon",
-        id: "db-feed",
+        action: "block",
+        type: "database",
+        preset: { view: "feed" },
         label: "Vue du fil d’actualité",
         Icon: Newspaper,
-        hint: "Hors MVP",
+        keywords: ["fil", "feed"],
       },
       {
-        action: "soon",
-        id: "db-dashboard",
+        action: "block",
+        type: "database",
+        preset: { view: "dashboard" },
         label: "Vue Tableau de bord",
         Icon: LayoutDashboard,
-        hint: "Hors MVP",
+        keywords: ["dashboard"],
       },
       {
-        action: "soon",
-        id: "db-calendar",
+        action: "block",
+        type: "database",
+        preset: { view: "calendar" },
         label: "Vue « calendrier »",
         Icon: Calendar,
-        hint: "Hors MVP",
+        keywords: ["calendrier"],
       },
       {
-        action: "soon",
-        id: "db-timeline",
+        action: "block",
+        type: "database",
+        preset: { view: "timeline" },
         label: "Vue « chronologie »",
         Icon: History,
-        hint: "Hors MVP",
+        keywords: ["timeline", "chronologie"],
       },
       {
-        action: "soon",
-        id: "chart-bar-v",
+        action: "block",
+        type: "chart",
+        preset: { chartKind: "bar" },
         label: "Graphique à barres verticales",
         Icon: BarChart3,
-        hint: "Hors MVP",
-        keywords: ["graphique"],
+        keywords: ["graphique", "barres"],
       },
       {
-        action: "soon",
-        id: "chart-line",
+        action: "block",
+        type: "chart",
+        preset: { chartKind: "line" },
         label: "Graphique en lignes",
         Icon: LineChart,
-        hint: "Hors MVP",
+        keywords: ["graphique", "ligne"],
       },
       {
-        action: "soon",
-        id: "chart-donut",
+        action: "block",
+        type: "chart",
+        preset: { chartKind: "donut" },
         label: "Graphique en anneau",
         Icon: PieChart,
-        hint: "Hors MVP",
+        keywords: ["graphique", "anneau", "donut"],
       },
     ],
   },
@@ -307,20 +322,18 @@ export const SLASH_MENU_SECTIONS: Section[] = [
         keywords: ["repliable", "toggle"],
       },
       {
-        action: "soon",
-        id: "page-embed",
+        action: "block",
+        type: "page_embed",
         label: "Page",
         Icon: FileText,
-        hint: "Bientôt",
-        keywords: ["sous page"],
+        keywords: ["sous page", "embed"],
       },
       {
-        action: "soon",
-        id: "callout",
+        action: "block",
+        type: "callout",
         label: "Encadré",
         Icon: MessageSquare,
-        hint: "Bientôt",
-        keywords: ["callout"],
+        keywords: ["callout", "encadre"],
       },
       {
         action: "block",
@@ -330,11 +343,11 @@ export const SLASH_MENU_SECTIONS: Section[] = [
         keywords: ["blockquote"],
       },
       {
-        action: "soon",
-        id: "table",
+        action: "block",
+        type: "table",
         label: "Tableau",
         Icon: Table2,
-        hint: "Bientôt",
+        keywords: ["table", "grille"],
       },
       {
         action: "block",
@@ -344,11 +357,11 @@ export const SLASH_MENU_SECTIONS: Section[] = [
         keywords: ["hr", "ligne"],
       },
       {
-        action: "soon",
-        id: "page-link",
+        action: "block",
+        type: "page_link",
         label: "Lien vers une page",
         Icon: Link2,
-        hint: "Bientôt",
+        keywords: ["mention", "lien interne"],
       },
     ],
   },
@@ -357,27 +370,25 @@ export const SLASH_MENU_SECTIONS: Section[] = [
     title: "Intégration & import",
     entries: [
       {
-        action: "soon",
-        id: "integration",
+        action: "block",
+        type: "embed",
         label: "Intégration",
         Icon: Plug,
-        hint: "Bientôt",
-        keywords: ["embed", "service"],
+        keywords: ["embed", "service", "youtube", "figma", "spotify"],
       },
       {
-        action: "soon",
+        action: "command",
         id: "import",
         label: "Importation",
         Icon: FileUp,
-        hint: "Bientôt",
-        keywords: ["fichier", "markdown"],
+        keywords: ["fichier", "markdown", "csv", "texte"],
       },
       {
-        action: "soon",
-        id: "audio-embed",
+        action: "block",
+        type: "audio",
         label: "Fichier audio",
         Icon: Mic,
-        hint: "Bientôt",
+        keywords: ["audio", "micro", "son"],
       },
     ],
   },
@@ -418,30 +429,30 @@ export function buildSlashMenuRows(filterRaw: string): {
     for (const e of section.entries) {
       if (e.action === "block") {
         const haystack = normalize(
-          [e.type, e.label, ...(e.keywords ?? [])].join(" "),
+          [e.type, e.label, e.preset?.view ?? "", e.preset?.chartKind ?? "", ...(e.keywords ?? [])].join(" "),
         );
         if (!q || haystack.includes(q)) {
           matched.push({
             kind: "block",
-            key: `b-${e.type}-${section.id}`,
+            key: `b-${e.type}-${e.preset?.view ?? e.preset?.chartKind ?? "default"}-${section.id}`,
             type: e.type,
             label: e.label,
             shortcut: e.shortcut,
+            preset: e.preset,
             Icon: e.Icon,
           });
         }
       } else {
         const haystack = normalize(
-          [e.id, e.label, e.hint, ...(e.keywords ?? [])].join(" "),
+          [e.id, e.label, ...(e.keywords ?? [])].join(" "),
         );
         if (!q || haystack.includes(q)) {
           matched.push({
-            kind: "soon",
-            key: `s-${e.id}`,
+            kind: "command",
+            key: `c-${e.id}`,
+            command: e.id,
             label: e.label,
-            shortcut: e.shortcut,
             Icon: e.Icon,
-            hint: e.hint,
           });
         }
       }
@@ -456,7 +467,7 @@ export function buildSlashMenuRows(filterRaw: string): {
     });
     for (const r of matched) {
       rows.push(r);
-      if (r.kind === "block") {
+      if (r.kind === "block" || r.kind === "command") {
         selectableRowIndices.push(rows.length - 1);
       }
     }

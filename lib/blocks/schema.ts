@@ -1,6 +1,22 @@
-import type { BlockType } from "@/types/block";
+import type {
+  BlockType,
+  ChartKind,
+  ChartPoint,
+  DbColumn,
+  DbRow,
+  DbView,
+  SlashBlockPreset,
+} from "@/types/block";
 import { DEFAULT_CODE_LANGUAGE } from "@/lib/editor/code-languages";
 import { BLOCK_TYPES } from "@/lib/editor/block-types";
+import {
+  applyPreset,
+  defaultChartPoints,
+  defaultDatabaseColumns,
+  defaultDatabaseRows,
+  defaultTableHeaders,
+  defaultTableRows,
+} from "@/lib/editor/rich-blocks";
 
 export { BLOCK_TYPES };
 
@@ -26,9 +42,28 @@ type SlateNode = {
   ogDescription?: string;
   ogImage?: string;
   ogSiteName?: string;
+  icon?: string;
+  tone?: "note" | "info" | "success" | "warning" | "danger";
+  pageId?: string;
+  pageTitle?: string;
+  headers?: string[];
+  rows?: string[][];
+  view?: DbView;
+  dbColumns?: DbColumn[];
+  dbRows?: DbRow[];
+  chartKind?: ChartKind;
+  chartPoints?: ChartPoint[];
 };
 
-export function createDefaultBlock(type: BlockType): SlateNode {
+export function createDefaultBlock(
+  type: BlockType,
+  preset?: SlashBlockPreset,
+): SlateNode {
+  const node = createDefaultBlockNode(type);
+  return applyPreset(type, node, preset) as SlateNode;
+}
+
+function createDefaultBlockNode(type: BlockType): SlateNode {
   switch (type) {
     case "divider":
       return { type: "divider", children: [{ text: "" }] };
@@ -52,6 +87,42 @@ export function createDefaultBlock(type: BlockType): SlateNode {
         url: "",
         children: [{ text: "" }],
       };
+    case "video":
+    case "audio":
+    case "embed":
+      return { type, url: "", children: [{ text: "" }] };
+    case "callout":
+      return {
+        type: "callout",
+        icon: "💡",
+        tone: "note",
+        children: [{ text: "" }],
+      };
+    case "table":
+      return {
+        type: "table",
+        headers: defaultTableHeaders(),
+        rows: defaultTableRows(),
+        children: [{ text: "" }],
+      };
+    case "page_link":
+    case "page_embed":
+      return { type, pageId: "", pageTitle: "", children: [{ text: "" }] };
+    case "database":
+      return {
+        type: "database",
+        view: "table",
+        dbColumns: defaultDatabaseColumns(),
+        dbRows: defaultDatabaseRows(),
+        children: [{ text: "" }],
+      };
+    case "chart":
+      return {
+        type: "chart",
+        chartKind: "bar",
+        chartPoints: defaultChartPoints(),
+        children: [{ text: "" }],
+      };
     case "toggle":
       return {
         type: "toggle",
@@ -72,6 +143,7 @@ export function createDefaultBlock(type: BlockType): SlateNode {
     case "heading1":
     case "heading2":
     case "heading3":
+    case "text_zone":
     case "paragraph":
       return { type, children: [{ text: "" }] };
     default:

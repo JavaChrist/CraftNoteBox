@@ -3,7 +3,6 @@ import {
   Briefcase,
   CalendarDays,
   FileText,
-  Inbox,
   Search,
   Sparkles,
 } from "lucide-react";
@@ -28,12 +27,6 @@ const cards = [
     title: "Réunions",
     description: "Planifie et consulte tes rendez-vous (calendrier à venir).",
     icon: CalendarDays,
-  },
-  {
-    href: "/inbox",
-    title: "Boîte de réception",
-    description: "Messages et notifications — module prévu en phase 2.",
-    icon: Inbox,
   },
   {
     href: "/assistant",

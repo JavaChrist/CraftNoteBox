@@ -11,7 +11,6 @@ function revalidateAppNavigation() {
   revalidatePath("/pages");
   revalidatePath("/trash");
   revalidatePath("/meetings");
-  revalidatePath("/inbox");
   revalidatePath("/search");
   revalidatePath("/assistant");
 }

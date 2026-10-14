@@ -2,9 +2,11 @@ import { Element as SlateElement, Text, type Descendant } from "slate";
 import type { Block } from "@/lib/db/types";
 import type { BlockType } from "@/types/block";
 import { normalizeCodeLanguage } from "@/lib/editor/code-languages";
+import { VOID_BLOCK_TYPES } from "@/lib/editor/block-types";
+import { richFieldsFromRaw } from "@/lib/editor/rich-blocks";
 import { isAllowedTextColor } from "@/lib/editor/text-color";
 
-const VOID_TYPES = new Set<BlockType>(["divider", "image", "file", "bookmark"]);
+const VOID_TYPES = VOID_BLOCK_TYPES;
 
 /**
  * Garantit un arbre Slate valide (chaque bloc a au moins une feuille texte).
@@ -34,6 +36,7 @@ function repairNode(raw: unknown, fallbackBlockType: BlockType): Descendant {
     const voidBase: Record<string, unknown> = {
       type,
       children: [{ text: "" }],
+      ...richFieldsFromRaw(type, obj),
     };
     if (type === "image") {
       voidBase.url = typeof obj.url === "string" ? obj.url : "";
@@ -78,6 +81,7 @@ function repairNode(raw: unknown, fallbackBlockType: BlockType): Descendant {
     const base: Record<string, unknown> = {
       type,
       children: [{ text: "" }],
+      ...richFieldsFromRaw(type, obj),
     };
     if (type === "todo") {
       base.checked =
@@ -91,7 +95,11 @@ function repairNode(raw: unknown, fallbackBlockType: BlockType): Descendant {
     return base as Descendant;
   }
 
-  const out: Record<string, unknown> = { type, children };
+  const out: Record<string, unknown> = {
+    type,
+    children,
+    ...richFieldsFromRaw(type, obj),
+  };
   if (type === "todo") {
     out.checked =
       typeof obj.checked === "boolean" ? obj.checked : false;
