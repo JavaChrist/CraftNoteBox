@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 import BrandMark from "@/components/brand/BrandMark";
 import { listPages } from "@/lib/actions/pages";
+import ExportArchiveButton from "@/components/export/ExportArchiveButton";
 import SidebarNav from "@/components/layout/SidebarNav";
 import SidebarPrivatePages from "@/components/layout/SidebarPrivatePages";
 import SidebarProPages from "@/components/layout/SidebarProPages";
@@ -78,6 +79,7 @@ export default async function Sidebar() {
         )}
       </div>
       <div className="border-t border-border px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+        <ExportArchiveButton />
         <form action="/auth/signout" method="post">
           <button
             type="submit"

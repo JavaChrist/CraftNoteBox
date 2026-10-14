@@ -8,14 +8,17 @@ Application web personnelle d’organisation et de prise de notes, inspirée de 
 
 - Authentification (Supabase Auth)
 - Navigation type Notion : sidebar, pages **privées** et **PRO** (`scope`)
-- Éditeur riche **Slate** : texte, titres, listes, tâches, citation, séparateur, repliable, code avec coloration (**lowlight** / thème highlight.js)
+- Éditeur riche **Slate** : texte, titres, zone de texte, listes, tâches, citation, séparateur, repliable, code, encadré, tableau, base de données, graphique, vidéo, audio, intégrations, liens de page
 - **Médias** : blocs image, fichier et aperçu de lien (Open Graph), import via **API** `/api/media/upload` + bucket Supabase `page-media`
+- **Import** `.md`, `.txt` et `.csv` depuis le menu slash, **export** de toutes les pages en archive Markdown (`/api/export`)
 - **Slash menu** (« + » ou transformation de blocs), positionnement adaptatif en bas de page
 - **Couleur** de texte par bloc, **suppression** de bloc depuis la gouttière
 - Sauvegarde automatique du contenu
 - Recherche globale (titres + contenu JSON des blocs)
+- **JavaChrist** : résumé, plan, reformulation et tâches depuis l’éditeur ; `/assistant` décrit le fonctionnement
 - **Réunions** : calendrier, création / édition, page de compte rendu **optionnelle**, pages liées
-- Corbeille (soft delete des pages), PWA / mode hors ligne (MVP selon config)
+- Corbeille (soft delete des pages)
+- PWA installable, page hors ligne de secours, et modale quand un nouveau déploiement est en ligne
 
 ---
 
@@ -25,12 +28,12 @@ Application web personnelle d’organisation et de prise de notes, inspirée de 
 |------|--------|--------|
 | **Auth** | Fait | Email / mot de passe, middleware `proxy.ts`, `@supabase/ssr`. |
 | **Navigation** | Fait | Sidebar, pages privées + PRO, création, corbeille. |
-| **Éditeur** | Fait (MVP) | Blocs listés ci-dessous + médias + code ; voids (Enter / suppression). |
+| **Éditeur** | Fait | Blocs listés ci-dessous, médias, code, import et export Markdown. |
 | **Stockage fichiers** | Fait | `page-media` + `SUPABASE_SERVICE_ROLE_KEY` pour l’upload serveur. |
-| **Réunions** | Fait (MVP) | RDV avec ou sans page « … - Compte rendu ». |
+| **Réunions** | Fait | Calendrier, rendez-vous, compte rendu optionnel. |
 | **Recherche** | Fait | `/search`, RPC SQL. |
-| **Assistant** | Placeholder | Route présente, contenu à venir. |
-| **Blocs enrichis** | À venir | Extensions futures dans le sélecteur de blocs. |
+| **Assistant** | Fait | Actions dans l’éditeur. `/assistant` explique l’usage. |
+| **Mises à jour** | Fait | `/api/version` + modale. L’app installée se recharge au lancement si le document est ancien. |
 | **Collaboration** | Non prévu | Usage personnel. |
 
 ---
@@ -44,10 +47,12 @@ Application web personnelle d’organisation et de prise de notes, inspirée de 
 | `/login` | Connexion |
 | `/pages` | Liste / contexte pages |
 | `/pages/[pageId]` | Éditeur |
-| `/meetings` | Réunions / agenda |
-| `/assistant` | Placeholder |
+| `/meetings` | Réunions / calendrier |
+| `/assistant` | Mode d’emploi de JavaChrist |
 | `/search` | Recherche |
 | `/trash` | Corbeille (pages supprimées) |
+| `/api/export` | Archive ZIP des pages (Markdown) |
+| `/api/version` | SHA du déploiement courant |
 | `/auth/callback` | Callback Supabase |
 
 ---
@@ -76,7 +81,7 @@ Application web personnelle d’organisation et de prise de notes, inspirée de 
 - `page_id`, `user_id`, `type`, `content` (jsonb), `order_index`
 
 **Types de blocs persistés (racine) :**  
-`paragraph`, `heading1`–`heading3`, `bulleted_list`, `numbered_list`, `todo`, `quote`, `divider`, `toggle`, `code`, `image`, `file`, `bookmark`
+`paragraph`, `heading1`–`heading3`, `text_zone`, `bulleted_list`, `numbered_list`, `todo`, `quote`, `divider`, `toggle`, `code`, `image`, `file`, `bookmark`, `video`, `audio`, `callout`, `table`, `page_link`, `page_embed`, `embed`, `database`, `chart`
 
 ### Réunions
 
@@ -89,7 +94,7 @@ Application web personnelle d’organisation et de prise de notes, inspirée de 
 ```
 app/
   (dashboard)/    # home, pages, meetings, search, trash, …
-  api/            # ai, link-preview, media/upload
+  api/            # ai, export, link-preview, media/upload, version
 components/
   editor/
 lib/
@@ -141,11 +146,9 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 ---
 
-## Prochaines étapes (feuille de route)
+## Périmètre
 
-- Enrichir le **sélecteur de blocs** (nouveaux types, mise en page)
-- Améliorations UX (drag & drop blocs, sidebar, etc.)
-- Assistant IA opérationnel sur `/assistant`
+Usage personnel. Pas de collaboration temps réel. Le hors-ligne se limite à la page de secours : les notes restent sur Supabase, et l’archive Markdown sert de copie de sauvegarde.
 
 ---
 

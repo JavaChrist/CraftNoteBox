@@ -20,6 +20,19 @@ const nextConfig = {
       bodySizeLimit: "52mb",
     },
   },
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+        ],
+      },
+    ];
+  },
   /** Aide Turbopack à résoudre `postcss` (Tailwind) sur certains environnements Windows. */
   turbopack: {
     resolveAlias: {

@@ -15,6 +15,34 @@ import { createPortal } from "react-dom";
  */
 
 const checkIntervalMs = 60_000;
+const reloadGuardKey = "cnb-standalone-reload";
+
+function isInstalledApp(): boolean {
+  const standalone = window.matchMedia("(display-mode: standalone)").matches;
+  const overlay = window.matchMedia("(display-mode: window-controls-overlay)").matches;
+  const ios =
+    "standalone" in navigator &&
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  return standalone || overlay || ios;
+}
+
+function rememberReload(version: string): boolean {
+  try {
+    if (sessionStorage.getItem(reloadGuardKey) === version) return false;
+    sessionStorage.setItem(reloadGuardKey, version);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearReloadGuard(): void {
+  try {
+    sessionStorage.removeItem(reloadGuardKey);
+  } catch {
+    // Session privée : le garde-fou est optionnel.
+  }
+}
 
 type UpdateBannerProps = {
   /** Version du déploiement qui a rendu la page (SHA du commit, ou "dev"). */
@@ -30,8 +58,12 @@ export default function UpdateBanner({ initialVersion }: UpdateBannerProps) {
     }
 
     let isCancelled = false;
+    let isFirstCheck = true;
 
     async function checkVersion() {
+      const launch = isFirstCheck;
+      isFirstCheck = false;
+
       try {
         const response = await fetch("/api/version", { cache: "no-store" });
 
@@ -40,15 +72,26 @@ export default function UpdateBanner({ initialVersion }: UpdateBannerProps) {
         }
 
         const data = (await response.json()) as { version?: string };
+        const version = data.version;
+        const mismatch = Boolean(
+          version && version !== "dev" && version !== initialVersion,
+        );
 
-        if (
-          !isCancelled &&
-          data.version &&
-          data.version !== "dev" &&
-          data.version !== initialVersion
-        ) {
-          setIsUpdateAvailable(true);
+        if (isCancelled) return;
+
+        if (!mismatch) {
+          clearReloadGuard();
+          return;
         }
+
+        // L’app installée peut rouvrir un document ancien. On recharge une fois
+        // au lancement ; si le document reste ancien, la modale prend le relais.
+        if (launch && isInstalledApp() && version && rememberReload(version)) {
+          window.location.reload();
+          return;
+        }
+
+        setIsUpdateAvailable(true);
       } catch {
         // Hors ligne ou serveur injoignable : on réessaiera au prochain tick.
       }

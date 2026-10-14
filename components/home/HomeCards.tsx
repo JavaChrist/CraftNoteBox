@@ -25,14 +25,14 @@ const cards = [
   {
     href: "/meetings",
     title: "Réunions",
-    description: "Planifie et consulte tes rendez-vous (calendrier à venir).",
+    description: "Planifie tes rendez-vous et retrouve-les dans le calendrier.",
     icon: CalendarDays,
   },
   {
     href: "/assistant",
     title: "JavaChrist",
     description:
-      "Assistant d’écriture dans l’éditeur (résumé, plan, checklist…). Infos et configuration.",
+      "Résume, structure et reformule depuis une page. Cette page rappelle comment l’utiliser.",
     icon: Sparkles,
   },
   {
