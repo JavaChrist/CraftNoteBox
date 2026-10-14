@@ -2,14 +2,14 @@ import Image from "next/image";
 import { BRAND_ICON_192 } from "@/lib/brand-assets";
 
 type Props = {
-  /** `md` ≈ 40px, `lg` ≈ 56px (sidebar), `xl` ≈ 112px (login) */
+  /** `md` ≈ 48px (sidebar), `lg` ≈ 56px, `xl` ≈ 112px (login) */
   size?: "md" | "lg" | "xl";
   className?: string;
   priority?: boolean;
 };
 
 const dim = {
-  md: { px: 40, className: "h-10 w-10" },
+  md: { px: 48, className: "h-12 w-12" },
   lg: { px: 56, className: "h-14 w-14" },
   xl: { px: 112, className: "h-28 w-28" },
 } as const;
