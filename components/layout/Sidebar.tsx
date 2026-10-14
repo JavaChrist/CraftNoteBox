@@ -35,7 +35,7 @@ export default async function Sidebar() {
           className="flex min-w-0 items-center gap-2.5 text-muted-foreground transition hover:text-foreground"
         >
           <BrandMark size="md" className="opacity-95" />
-          <span className="text-xs font-semibold uppercase tracking-[0.08em]">
+          <span className="text-[0.9rem] font-semibold uppercase leading-none tracking-[0.08em]">
             CraftNoteBox
           </span>
         </Link>
