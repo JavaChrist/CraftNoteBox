@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { ExternalLink, FileText, MapPin, Pencil, Trash2 } from "lucide-react";
 import { deleteMeeting } from "@/lib/actions/meetings";
 import type { Meeting } from "@/lib/meetings/types";
+import { PAGE_SCOPE_META } from "@/lib/pages/scopes";
 
 function formatRange(startIso: string, endIso: string): string {
   const s = new Date(startIso);
@@ -138,7 +139,7 @@ export default function MeetingCard({ meeting, onEdit }: Props) {
                 >
                   <span className="max-w-[10rem] truncate">{p.title}</span>
                   <span className="text-[10px] text-muted-foreground">
-                    {p.scope === "pro" ? "PRO" : "privé"}
+                    {PAGE_SCOPE_META[p.scope].shortLabel}
                   </span>
                   <ExternalLink className="h-3 w-3 opacity-60" aria-hidden />
                 </Link>

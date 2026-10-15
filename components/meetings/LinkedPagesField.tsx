@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { PickablePage } from "@/lib/meetings/types";
+import { PAGE_SCOPE_META } from "@/lib/pages/scopes";
 
 type Props = {
   pages: PickablePage[];
@@ -77,7 +78,7 @@ export default function LinkedPagesField({
               />
               <span className="min-w-0 flex-1 truncate">{p.title}</span>
               <span className="shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
-                {p.scope === "pro" ? "PRO" : "privé"}
+                {PAGE_SCOPE_META[p.scope].shortLabel}
               </span>
             </label>
           ))

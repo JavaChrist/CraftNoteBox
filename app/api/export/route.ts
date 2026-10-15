@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerUser } from "@/lib/auth/session";
 import { buildArchiveZip, type ArchiveBlock, type ArchivePage } from "@/lib/export/archive";
+import { parsePageScope } from "@/lib/pages/scopes";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { supabaseToError } from "@/lib/supabase/to-error";
 
@@ -67,7 +68,7 @@ export async function GET() {
       id: row.id,
       title: row.title?.trim() || "Sans titre",
       parentId: row.parent_id,
-      scope: row.scope === "pro" ? "pro" : "private",
+      scope: parsePageScope(row.scope),
       updatedAt: row.updated_at,
     }));
 

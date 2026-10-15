@@ -5,6 +5,7 @@ import { createServiceRoleClient } from "../supabase/service";
 import { supabaseToError } from "../supabase/to-error";
 import { requireUser } from "../auth/session";
 import type { Page, PageScope } from "../db/types";
+import { parsePageScope } from "../pages/scopes";
 
 function revalidateAppNavigation() {
   revalidatePath("/home");
@@ -28,7 +29,7 @@ type PageRow = {
 };
 
 function rowScope(row: PageRow): PageScope {
-  return row.scope === "pro" ? "pro" : "private";
+  return parsePageScope(row.scope);
 }
 
 function rowToPage(row: PageRow): Page {

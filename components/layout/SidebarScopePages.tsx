@@ -6,57 +6,58 @@ import SidebarCreatePageButton from "@/components/layout/SidebarCreatePageButton
 import SidebarPageList from "@/components/layout/SidebarPageList";
 import SidebarSection from "@/components/layout/SidebarSection";
 import SidebarSectionMenu from "@/components/layout/SidebarSectionMenu";
-import type { Page } from "@/lib/db/types";
-
-const HIDDEN_KEY = "cnb-sidebar-private-hidden";
+import type { Page, PageScope } from "@/lib/db/types";
+import { PAGE_SCOPE_META } from "@/lib/pages/scopes";
 
 type Props = {
+  scope: PageScope;
   pages: Page[];
 };
 
-export default function SidebarPrivatePages({ pages }: Props) {
+export default function SidebarScopePages({ scope, pages }: Props) {
+  const meta = PAGE_SCOPE_META[scope];
   const [sectionHidden, setSectionHidden] = useState(false);
 
   useEffect(() => {
     try {
-      setSectionHidden(localStorage.getItem(HIDDEN_KEY) === "1");
+      setSectionHidden(localStorage.getItem(meta.hiddenKey) === "1");
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [meta.hiddenKey]);
 
   const hideSection = useCallback(() => {
     setSectionHidden(true);
     try {
-      localStorage.setItem(HIDDEN_KEY, "1");
+      localStorage.setItem(meta.hiddenKey, "1");
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [meta.hiddenKey]);
 
   const showSection = useCallback(() => {
     setSectionHidden(false);
     try {
-      localStorage.removeItem(HIDDEN_KEY);
+      localStorage.removeItem(meta.hiddenKey);
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [meta.hiddenKey]);
 
   return (
     <SidebarSection
-      title="Pages privées"
-      sectionId="sidebar-pages-privees"
-      persistStorageKey="cnb-sidebar-private-expanded"
+      title={meta.title}
+      sectionId={meta.sectionId}
+      persistStorageKey={meta.expandedKey}
       hidden={sectionHidden}
       onShow={showSection}
       actions={
         sectionHidden ? undefined : (
           <>
-            <SidebarCreatePageButton scope="private" variant="private" />
+            <SidebarCreatePageButton scope={scope} />
             <SidebarSectionMenu
               onHideSection={hideSection}
-              sectionLabel="Pages privées"
+              sectionLabel={meta.title}
             />
           </>
         )
@@ -69,7 +70,7 @@ export default function SidebarPrivatePages({ pages }: Props) {
             aria-hidden
           />
           <p className="mt-2 text-xs font-medium text-foreground">
-            Aucune page
+            {meta.emptyTitle}
           </p>
           <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
             Utilise le bouton <span className="font-medium">+</span> ci-dessus

@@ -1,8 +1,11 @@
 import Link from "next/link";
 import {
+  AppWindow,
+  Archive,
   Briefcase,
   CalendarDays,
   FileText,
+  FolderKanban,
   Search,
   Sparkles,
 } from "lucide-react";
@@ -21,6 +24,24 @@ const cards = [
     description:
       "Espace dédié aux contenus PRO : même outils que les pages privées, liste séparée.",
     icon: Briefcase,
+  },
+  {
+    href: "/pages#sidebar-pages-projets",
+    title: "Projets",
+    description: "Notes de projet, séparées des pages privées et PRO.",
+    icon: FolderKanban,
+  },
+  {
+    href: "/pages#sidebar-pages-sauvegardes",
+    title: "Sauvegardes",
+    description: "Procédures, copies et points de restauration à garder sous la main.",
+    icon: Archive,
+  },
+  {
+    href: "/pages#sidebar-pages-applications",
+    title: "Applications",
+    description: "Fiches et notes pour chaque application.",
+    icon: AppWindow,
   },
   {
     href: "/meetings",

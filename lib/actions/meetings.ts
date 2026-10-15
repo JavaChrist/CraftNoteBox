@@ -6,6 +6,7 @@ import { supabaseToError } from "../supabase/to-error";
 import { requireUser } from "../auth/session";
 import { buildMeetingMinutesBlockSeeds } from "../blocks/meeting-minutes-template";
 import type { PageScope } from "../db/types";
+import { parsePageScope } from "../pages/scopes";
 import type {
   CreateMeetingWithPageResult,
   Meeting,
@@ -138,7 +139,7 @@ type NestedMeetingPage = {
 };
 
 function scopeFromRow(s: string | null | undefined): PageScope {
-  return s === "pro" ? "pro" : "private";
+  return parsePageScope(s);
 }
 
 function parseLinkedPages(rows: NestedMeetingPage[] | null): MeetingLinkedPage[] {

@@ -2,8 +2,13 @@ import type { BlockType, SlashBlockPreset } from "@/types/block";
 
 export type { BlockType, SlashBlockPreset };
 
-/** Pages privées (sidebar) vs pages PRO (même éditeur et routes `/pages/[id]`). */
-export type PageScope = "private" | "pro";
+/** Rubrique d’une page. L’éditeur et l’URL restent les mêmes. */
+export type PageScope =
+  | "private"
+  | "pro"
+  | "projets"
+  | "sauvegardes"
+  | "applications";
 
 export type Block = {
   id: string;

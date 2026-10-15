@@ -3,6 +3,8 @@
  * Le but est une sauvegarde, pas une copie pixel près de l’éditeur.
  */
 
+import type { PageScope } from "@/lib/db/types";
+
 type Node = Record<string, unknown>;
 
 function isRecord(value: unknown): value is Node {
@@ -177,7 +179,7 @@ function yamlString(value: string): string {
 
 export function pageToMarkdown(input: {
   title: string;
-  scope: "private" | "pro";
+  scope: PageScope;
   id: string;
   updatedAt: string;
   blocks: unknown[];

@@ -4,9 +4,9 @@ import BrandMark from "@/components/brand/BrandMark";
 import { listPages } from "@/lib/actions/pages";
 import ExportArchiveButton from "@/components/export/ExportArchiveButton";
 import SidebarNav from "@/components/layout/SidebarNav";
-import SidebarPrivatePages from "@/components/layout/SidebarPrivatePages";
-import SidebarProPages from "@/components/layout/SidebarProPages";
-import type { Page } from "@/lib/db/types";
+import SidebarScopePages from "@/components/layout/SidebarScopePages";
+import type { Page, PageScope } from "@/lib/db/types";
+import { PAGE_SCOPES } from "@/lib/pages/scopes";
 
 function formatLoadError(err: unknown): string {
   if (err instanceof Error) return err.message;
@@ -14,15 +14,20 @@ function formatLoadError(err: unknown): string {
 }
 
 export default async function Sidebar() {
-  let privatePages: Page[] = [];
-  let proPages: Page[] = [];
+  let pagesByScope: Record<PageScope, Page[]> = {
+    private: [],
+    pro: [],
+    projets: [],
+    sauvegardes: [],
+    applications: [],
+  };
   let loadError: string | null = null;
 
   try {
-    [privatePages, proPages] = await Promise.all([
-      listPages("private"),
-      listPages("pro"),
-    ]);
+    const lists = await Promise.all(PAGE_SCOPES.map((scope) => listPages(scope)));
+    pagesByScope = Object.fromEntries(
+      PAGE_SCOPES.map((scope, index) => [scope, lists[index] ?? []]),
+    ) as Record<PageScope, Page[]>;
   } catch (err) {
     loadError = formatLoadError(err);
     console.error("Impossible de charger les pages:", loadError);
@@ -73,8 +78,13 @@ export default async function Sidebar() {
           </div>
         ) : (
           <>
-            <SidebarPrivatePages pages={privatePages} />
-            <SidebarProPages pages={proPages} />
+            {PAGE_SCOPES.map((scope) => (
+              <SidebarScopePages
+                key={scope}
+                scope={scope}
+                pages={pagesByScope[scope]}
+              />
+            ))}
           </>
         )}
       </div>

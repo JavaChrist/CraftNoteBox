@@ -7,7 +7,7 @@ Application web personnelle d’organisation et de prise de notes, inspirée de 
 ## Fonctionnalités principales
 
 - Authentification (Supabase Auth)
-- Navigation type Notion : sidebar, pages **privées** et **PRO** (`scope`)
+- Navigation type Notion : sidebar, pages **privées**, **PRO**, **Projets**, **Sauvegardes** et **Applications**
 - Éditeur riche **Slate** : texte, titres, zone de texte, listes, tâches, citation, séparateur, repliable, code, encadré, tableau, base de données, graphique, vidéo, audio, intégrations, liens de page
 - **Médias** : blocs image, fichier et aperçu de lien (Open Graph), import via **API** `/api/media/upload` + bucket Supabase `page-media`
 - **Import** `.md`, `.txt` et `.csv` depuis le menu slash, **export** de toutes les pages en archive Markdown (`/api/export`)
@@ -27,7 +27,7 @@ Application web personnelle d’organisation et de prise de notes, inspirée de 
 | Zone | Statut | Détail |
 |------|--------|--------|
 | **Auth** | Fait | Email / mot de passe, middleware `proxy.ts`, `@supabase/ssr`. |
-| **Navigation** | Fait | Sidebar, pages privées + PRO, création, corbeille. |
+| **Navigation** | Fait | Sidebar : pages privées, PRO, Projets, Sauvegardes, Applications, corbeille. |
 | **Éditeur** | Fait | Blocs listés ci-dessous, médias, code, import et export Markdown. |
 | **Stockage fichiers** | Fait | `page-media` + `SUPABASE_SERVICE_ROLE_KEY` pour l’upload serveur. |
 | **Réunions** | Fait | Calendrier, rendez-vous, compte rendu optionnel. |
@@ -73,7 +73,7 @@ Application web personnelle d’organisation et de prise de notes, inspirée de 
 
 ### `pages`
 
-- `user_id`, `title`, `parent_id`, `icon`, `scope` (`private` \| `pro`)
+- `user_id`, `title`, `parent_id`, `icon`, `scope` (`private` \| `pro` \| `projets` \| `sauvegardes` \| `applications`)
 - `deleted_at` (soft delete → corbeille)
 
 ### `blocks`
@@ -143,6 +143,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 6. `20260415000000_pages_soft_delete.sql`
 7. `20260416000000_page_media_storage.sql` (bucket `page-media`)
 8. `20260417000000_storage_rls_split_part.sql` (politiques storage, optionnel mais recommandé)
+9. `20261015020000_page_scope_sections.sql` (rubriques Projets, Sauvegardes, Applications)
 
 ---
 

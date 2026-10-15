@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { permanentDeletePage, restorePage } from "@/lib/actions/pages";
 import type { Page } from "@/lib/db/types";
+import { PAGE_SCOPE_META } from "@/lib/pages/scopes";
 
 type Props = {
   initialPages: Page[];
@@ -64,7 +65,7 @@ export default function TrashPageClient({ initialPages }: Props) {
                 {p.title || "Sans titre"}
               </p>
               <p className="text-xs text-muted-foreground">
-                {p.scope === "pro" ? "PRO" : "Privé"}
+                {PAGE_SCOPE_META[p.scope].shortLabel}
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">

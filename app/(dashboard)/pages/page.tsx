@@ -10,13 +10,10 @@ export default function PagesHome() {
               Tes pages
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Ouvre une page depuis{" "}
-              <span className="font-medium text-foreground">Pages privées</span>{" "}
-              ou{" "}
-              <span className="font-medium text-foreground">Pages PRO</span> dans
-              la barre latérale, ou crée-en une avec le bouton{" "}
-              <span className="font-medium text-foreground">+</span> de la section
-              voulue.
+              Ouvre une page depuis la barre latérale : pages privées, pages PRO,
+              Projets, Sauvegardes ou Applications. Le bouton{" "}
+              <span className="font-medium text-foreground">+</span> de chaque
+              rubrique crée une page dedans.
             </p>
           </div>
           <div className="rounded-xl border border-dashed border-border bg-card/50 p-6">
@@ -38,8 +35,8 @@ export default function PagesHome() {
                     <span>
                       Clique sur le bouton{" "}
                       <span className="font-medium text-foreground">+</span> à
-                      côté de « Pages privées » ou « Pages PRO » pour créer une
-                      page.
+                      côté de la rubrique voulue (Pages privées, Pages PRO, Projets,
+                      Sauvegardes ou Applications) pour créer une page.
                     </span>
                   </li>
                   <li className="flex gap-2">

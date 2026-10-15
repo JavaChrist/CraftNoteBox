@@ -1,3 +1,5 @@
+import type { PageScope } from "@/lib/db/types";
+import { PAGE_SCOPE_META } from "@/lib/pages/scopes";
 import type { BlockType } from "@/types/block";
 import { blocksToSlateValue } from "@/lib/editor/slate-value";
 import { pageToMarkdown } from "@/lib/export/markdown";
@@ -7,7 +9,7 @@ export type ArchivePage = {
   id: string;
   title: string;
   parentId: string | null;
-  scope: "private" | "pro";
+  scope: PageScope;
   updatedAt: string;
 };
 
@@ -68,7 +70,7 @@ function pageFilePath(
   }
   names.reverse();
   const ownName = names.pop() ?? "sans-titre";
-  const folder = page.scope === "pro" ? "pro" : "prive";
+  const folder = PAGE_SCOPE_META[page.scope].exportFolder;
   if (parentIds.has(page.id)) {
     return [folder, ...names, ownName, "index.md"].join("/");
   }
