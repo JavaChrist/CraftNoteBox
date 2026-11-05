@@ -20,6 +20,15 @@ const nextConfig = {
       bodySizeLimit: "52mb",
     },
   },
+  async redirects() {
+    return [
+      {
+        source: "/forgot-password",
+        destination: "/mot-de-passe-oublie",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {

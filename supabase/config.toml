@@ -1,0 +1,29 @@
+project_id = "wbkglrsorsbwetsdaeiy"
+
+# Les modèles d'authentification se résolvent depuis la racine du projet.
+# La notification se résout depuis le dossier supabase/.
+
+[auth.email.template.confirmation]
+subject = "Confirmez votre adresse email — CraftNoteBox"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Réinitialisez votre mot de passe — CraftNoteBox"
+content_path = "./supabase/templates/reset-password.html"
+
+[auth.email.template.magic_link]
+subject = "Votre lien de connexion — CraftNoteBox"
+content_path = "./supabase/templates/magic-link.html"
+
+[auth.email.template.invite]
+subject = "Vous êtes invité — CraftNoteBox"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.email_change]
+subject = "Confirmez votre nouvelle adresse email — CraftNoteBox"
+content_path = "./supabase/templates/change-email.html"
+
+[auth.email.notification.password_changed]
+enabled = true
+subject = "Votre mot de passe a été modifié — CraftNoteBox"
+content_path = "./templates/password-changed.html"
