@@ -4,13 +4,17 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { permanentDeletePage, restorePage } from "@/lib/actions/pages";
 import type { Page } from "@/lib/db/types";
-import { PAGE_SCOPE_META } from "@/lib/pages/scopes";
+import { scopeShortLabel } from "@/lib/pages/scopes";
 
 type Props = {
   initialPages: Page[];
+  sectionLabels: Record<string, string>;
 };
 
-export default function TrashPageClient({ initialPages }: Props) {
+export default function TrashPageClient({
+  initialPages,
+  sectionLabels,
+}: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +69,7 @@ export default function TrashPageClient({ initialPages }: Props) {
                 {p.title || "Sans titre"}
               </p>
               <p className="text-xs text-muted-foreground">
-                {PAGE_SCOPE_META[p.scope].shortLabel}
+                {scopeShortLabel(p.scope, sectionLabels)}
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">

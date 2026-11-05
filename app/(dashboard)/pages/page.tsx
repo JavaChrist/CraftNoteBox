@@ -10,8 +10,8 @@ export default function PagesHome() {
               Tes pages
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Ouvre une page depuis la barre latérale : pages privées, pages PRO,
-              Projets, Sauvegardes ou Applications. Le bouton{" "}
+              Ouvre une page depuis la barre latérale. Les rubriques d’origine
+              sont déjà là, et tu peux en ajouter d’autres. Le bouton{" "}
               <span className="font-medium text-foreground">+</span> de chaque
               rubrique crée une page dedans.
             </p>
@@ -35,8 +35,8 @@ export default function PagesHome() {
                     <span>
                       Clique sur le bouton{" "}
                       <span className="font-medium text-foreground">+</span> à
-                      côté de la rubrique voulue (Pages privées, Pages PRO, Projets,
-                      Sauvegardes ou Applications) pour créer une page.
+                      côté de la rubrique voulue pour créer une page. Le bouton
+                      Nouvelle rubrique, en bas de la liste, ajoute une rubrique.
                     </span>
                   </li>
                   <li className="flex gap-2">

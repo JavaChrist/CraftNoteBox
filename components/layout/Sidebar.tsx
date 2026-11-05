@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 import BrandMark from "@/components/brand/BrandMark";
-import { listPages } from "@/lib/actions/pages";
+import { listLivePages } from "@/lib/actions/pages";
+import { listSections } from "@/lib/actions/sections";
 import ExportArchiveButton from "@/components/export/ExportArchiveButton";
+import SidebarCreateSectionButton from "@/components/layout/SidebarCreateSectionButton";
 import SidebarNav from "@/components/layout/SidebarNav";
 import SidebarScopePages from "@/components/layout/SidebarScopePages";
-import type { Page, PageScope } from "@/lib/db/types";
-import { PAGE_SCOPES } from "@/lib/pages/scopes";
+import type { Page, PageSection } from "@/lib/db/types";
 
 function formatLoadError(err: unknown): string {
   if (err instanceof Error) return err.message;
@@ -14,20 +15,35 @@ function formatLoadError(err: unknown): string {
 }
 
 export default async function Sidebar() {
-  let pagesByScope: Record<PageScope, Page[]> = {
-    private: [],
-    pro: [],
-    projets: [],
-    sauvegardes: [],
-    applications: [],
-  };
+  let sections: PageSection[] = [];
+  let pagesByScope = new Map<string, Page[]>();
   let loadError: string | null = null;
 
   try {
-    const lists = await Promise.all(PAGE_SCOPES.map((scope) => listPages(scope)));
-    pagesByScope = Object.fromEntries(
-      PAGE_SCOPES.map((scope, index) => [scope, lists[index] ?? []]),
-    ) as Record<PageScope, Page[]>;
+    const [loadedSections, pages] = await Promise.all([
+      listSections(),
+      listLivePages(),
+    ]);
+    sections = loadedSections;
+    pagesByScope = new Map(sections.map((section) => [section.slug, []]));
+    for (const page of pages) {
+      const bucket = pagesByScope.get(page.scope);
+      if (bucket) {
+        bucket.push(page);
+        continue;
+      }
+      sections.push({
+        id: `orphan:${page.scope}`,
+        userId: page.userId,
+        slug: page.scope,
+        title: page.scope,
+        shortLabel: page.scope,
+        sortOrder: 1000 + sections.length,
+        builtin: false,
+        persisted: false,
+      });
+      pagesByScope.set(page.scope, [page]);
+    }
   } catch (err) {
     loadError = formatLoadError(err);
     console.error("Impossible de charger les pages:", loadError);
@@ -78,13 +94,16 @@ export default async function Sidebar() {
           </div>
         ) : (
           <>
-            {PAGE_SCOPES.map((scope) => (
+            {sections.map((section) => (
               <SidebarScopePages
-                key={scope}
-                scope={scope}
-                pages={pagesByScope[scope]}
+                key={section.id}
+                section={section}
+                pages={pagesByScope.get(section.slug) ?? []}
               />
             ))}
+            <div className="px-2 py-2">
+              <SidebarCreateSectionButton />
+            </div>
           </>
         )}
       </div>

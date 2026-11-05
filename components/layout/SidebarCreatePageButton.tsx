@@ -5,14 +5,12 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { createPage } from "@/lib/actions/pages";
 import SidebarModal from "@/components/layout/SidebarModal";
-import type { PageScope } from "@/lib/db/types";
-import { PAGE_SCOPE_META } from "@/lib/pages/scopes";
-
 type Props = {
-  scope: PageScope;
+  scope: string;
+  sectionTitle: string;
 };
 
-export default function SidebarCreatePageButton({ scope }: Props) {
+export default function SidebarCreatePageButton({ scope, sectionTitle }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -44,7 +42,6 @@ export default function SidebarCreatePageButton({ scope }: Props) {
     });
   };
 
-  const sectionTitle = PAGE_SCOPE_META[scope].title;
   const plusTitle = `Nouvelle page — ${sectionTitle}`;
   const ariaLabel = `Créer une page dans ${sectionTitle}`;
   const dialogTitle = plusTitle;

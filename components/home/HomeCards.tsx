@@ -5,10 +5,14 @@ import {
   Briefcase,
   CalendarDays,
   FileText,
+  Folder,
   FolderKanban,
   Search,
   Sparkles,
+  type LucideIcon,
 } from "lucide-react";
+import { listSections } from "@/lib/actions/sections";
+import { sectionDomId } from "@/lib/pages/scopes";
 
 const cards = [
   {
@@ -62,12 +66,35 @@ const cards = [
     description: "Trouve rapidement une page dans tes contenus.",
     icon: Search,
   },
-] as const;
+] as const satisfies readonly {
+  href: string;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+}[];
 
-export default function HomeCards() {
+export default async function HomeCards() {
+  let custom: { href: string; title: string; description: string; icon: LucideIcon }[] =
+    [];
+  try {
+    const sections = await listSections();
+    custom = sections
+      .filter((section) => section.persisted && !section.builtin)
+      .map((section) => ({
+        href: `/pages#${sectionDomId(section.slug)}`,
+        title: section.title,
+        description: "Rubrique que tu as créée. Les pages s’ouvrent dans la barre latérale.",
+        icon: Folder,
+      }));
+  } catch {
+    custom = [];
+  }
+
+  const visibleCards = [...cards.slice(0, 5), ...custom, ...cards.slice(5)];
+
   return (
     <ul className="grid gap-4 sm:grid-cols-2">
-      {cards.map(({ href, title, description, icon: Icon }) => (
+      {visibleCards.map(({ href, title, description, icon: Icon }) => (
         <li key={href}>
           <Link
             href={href}

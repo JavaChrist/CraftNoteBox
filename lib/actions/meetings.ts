@@ -6,7 +6,8 @@ import { supabaseToError } from "../supabase/to-error";
 import { requireUser } from "../auth/session";
 import { buildMeetingMinutesBlockSeeds } from "../blocks/meeting-minutes-template";
 import type { PageScope } from "../db/types";
-import { parsePageScope } from "../pages/scopes";
+import { parsePageScope, scopeShortLabel } from "../pages/scopes";
+import { listSections } from "./sections";
 import type {
   CreateMeetingWithPageResult,
   Meeting,
@@ -95,7 +96,7 @@ async function fetchMeetingById(
   if (fetchErr) throw supabaseToError(fetchErr);
   const r = full as MeetingRow & { meeting_pages: NestedMeetingPage[] | null };
   const { meeting_pages, ...rest } = r;
-  return rowToMeeting(rest, meeting_pages);
+  return rowToMeeting(rest, meeting_pages, await sectionLabels());
 }
 
 /** PostgREST : table absente du cache schéma (migration non appliquée). */
@@ -142,17 +143,29 @@ function scopeFromRow(s: string | null | undefined): PageScope {
   return parsePageScope(s);
 }
 
-function parseLinkedPages(rows: NestedMeetingPage[] | null): MeetingLinkedPage[] {
+async function sectionLabels(): Promise<Record<string, string>> {
+  const sections = await listSections();
+  return Object.fromEntries(
+    sections.map((section) => [section.slug, section.shortLabel]),
+  );
+}
+
+function parseLinkedPages(
+  rows: NestedMeetingPage[] | null,
+  labels: Record<string, string>,
+): MeetingLinkedPage[] {
   if (!rows?.length) return [];
   const out: MeetingLinkedPage[] = [];
   for (const row of rows) {
     const p = row.pages;
     const page = Array.isArray(p) ? p[0] : p;
     if (!page?.id) continue;
+    const scope = scopeFromRow(page.scope);
     out.push({
       id: page.id,
       title: page.title || "Sans titre",
-      scope: scopeFromRow(page.scope),
+      scope,
+      scopeLabel: scopeShortLabel(scope, labels),
     });
   }
   return out;
@@ -161,6 +174,7 @@ function parseLinkedPages(rows: NestedMeetingPage[] | null): MeetingLinkedPage[]
 function rowToMeeting(
   row: MeetingRow,
   linked: NestedMeetingPage[] | null,
+  labels: Record<string, string>,
 ): Meeting {
   return {
     id: row.id,
@@ -173,7 +187,7 @@ function rowToMeeting(
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     minutesPageId: row.minutes_page_id ?? null,
-    linkedPages: parseLinkedPages(linked),
+    linkedPages: parseLinkedPages(linked, labels),
   };
 }
 
@@ -190,12 +204,17 @@ export async function listPagesForMeetingPicker(): Promise<PickablePage[]> {
     .order("title", { ascending: true });
 
   if (error) throw supabaseToError(error);
+  const labels = await sectionLabels();
   return ((data ?? []) as { id: string; title: string; scope: string | null }[]).map(
-    (r) => ({
-      id: r.id,
-      title: r.title || "Sans titre",
-      scope: scopeFromRow(r.scope),
-    }),
+    (r) => {
+      const scope = scopeFromRow(r.scope);
+      return {
+        id: r.id,
+        title: r.title || "Sans titre",
+        scope,
+        scopeLabel: scopeShortLabel(scope, labels),
+      };
+    },
   );
 }
 
@@ -228,11 +247,12 @@ export async function listMeetingsWithLinks(): Promise<MeetingsListResult> {
     throw supabaseToError(error);
   }
 
+  const labels = await sectionLabels();
   const meetings = ((data ?? []) as (MeetingRow & {
     meeting_pages: NestedMeetingPage[] | null;
   })[]).map((row) => {
     const { meeting_pages, ...rest } = row;
-    return rowToMeeting(rest, meeting_pages);
+    return rowToMeeting(rest, meeting_pages, labels);
   });
 
   return { meetings, schemaMissing: false };

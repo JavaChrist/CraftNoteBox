@@ -5,6 +5,7 @@ export type MeetingLinkedPage = {
   id: string;
   title: string;
   scope: PageScope;
+  scopeLabel: string;
 };
 
 export type Meeting = {
@@ -41,6 +42,7 @@ export type PickablePage = {
   id: string;
   title: string;
   scope: PageScope;
+  scopeLabel: string;
 };
 
 export type CreateMeetingWithPageResult = {

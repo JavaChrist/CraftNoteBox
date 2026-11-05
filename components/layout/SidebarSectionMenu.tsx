@@ -7,10 +7,14 @@ import {
   Library,
   MoreHorizontal,
   PanelBottomClose,
+  Pencil,
   Rows3,
+  Trash2,
 } from "lucide-react";
 
 export type SectionMenuActionId =
+  | "rename"
+  | "delete"
   | "sort"
   | "move-up"
   | "move-down"
@@ -65,11 +69,15 @@ type Props = {
   onHideSection: () => void;
   /** Pour l’accessibilité du bouton « … » (ex. « Pages privées », « Pages PRO »). */
   sectionLabel?: string;
+  onRename?: () => void;
+  onDelete?: () => void;
 };
 
 export default function SidebarSectionMenu({
   onHideSection,
   sectionLabel = "Pages privées",
+  onRename,
+  onDelete,
 }: Props) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -108,27 +116,37 @@ export default function SidebarSectionMenu({
           role="menu"
           className="absolute right-0 top-full z-50 mt-1 w-[220px] rounded-md border border-border bg-popover py-1 shadow-md"
         >
-          {MENU_ITEMS.map((item) => {
+          {[
+            ...(onRename
+              ? [{ id: "rename" as const, label: "Renommer", icon: Pencil }]
+              : []),
+            ...(onDelete
+              ? [{ id: "delete" as const, label: "Supprimer", icon: Trash2 }]
+              : []),
+            ...MENU_ITEMS,
+          ].map((item) => {
             const Icon = item.icon;
             const onActivate = () => {
-              if (item.disabled) return;
-              if (item.id === "hide") {
-                onHideSection();
-                setOpen(false);
-              }
+              if ("disabled" in item && item.disabled) return;
+              if (item.id === "hide") onHideSection();
+              if (item.id === "rename") onRename?.();
+              if (item.id === "delete") onDelete?.();
+              setOpen(false);
             };
             return (
               <button
                 key={item.id}
                 type="button"
                 role="menuitem"
-                disabled={item.disabled}
+                disabled={"disabled" in item ? item.disabled : false}
                 onClick={onActivate}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50 ${
+                  item.id === "delete" ? "text-destructive" : "text-foreground"
+                }`}
               >
                 <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                {item.hint ? (
+                {"hint" in item && item.hint ? (
                   <span className="shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
                     {item.hint}
                   </span>

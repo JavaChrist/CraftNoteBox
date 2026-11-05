@@ -1,14 +1,23 @@
 import Link from "next/link";
 import TrashPageClient from "@/components/pages/TrashPageClient";
 import { listTrashedPages } from "@/lib/actions/pages";
+import { listSections } from "@/lib/actions/sections";
 import type { Page } from "@/lib/db/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function TrashRoute() {
   let pages: Page[] = [];
+  let sectionLabels: Record<string, string> = {};
   try {
-    pages = await listTrashedPages();
+    const [trashed, sections] = await Promise.all([
+      listTrashedPages(),
+      listSections(),
+    ]);
+    pages = trashed;
+    sectionLabels = Object.fromEntries(
+      sections.map((section) => [section.slug, section.shortLabel]),
+    );
   } catch {
     pages = [];
   }
@@ -36,7 +45,7 @@ export default async function TrashRoute() {
             ← Retour aux pages
           </Link>
         </p>
-        <TrashPageClient initialPages={pages} />
+        <TrashPageClient initialPages={pages} sectionLabels={sectionLabels} />
       </div>
     </main>
   );

@@ -1,5 +1,5 @@
 import type { PageScope } from "@/lib/db/types";
-import { PAGE_SCOPE_META } from "@/lib/pages/scopes";
+import { scopeExportFolder } from "@/lib/pages/scopes";
 import type { BlockType } from "@/types/block";
 import { blocksToSlateValue } from "@/lib/editor/slate-value";
 import { pageToMarkdown } from "@/lib/export/markdown";
@@ -70,7 +70,7 @@ function pageFilePath(
   }
   names.reverse();
   const ownName = names.pop() ?? "sans-titre";
-  const folder = PAGE_SCOPE_META[page.scope].exportFolder;
+  const folder = scopeExportFolder(page.scope);
   if (parentIds.has(page.id)) {
     return [folder, ...names, ownName, "index.md"].join("/");
   }
@@ -130,7 +130,7 @@ export function buildArchiveFiles(
     "",
     `Export du ${exportedAt}.`,
     "Les pages encore dans la corbeille ne sont pas incluses.",
-    "Les dossiers `prive/` et `pro/` reprennent l’arborescence des pages.",
+    "Chaque rubrique a son dossier (`prive/`, `pro/`, ou le nom de la rubrique).",
     "",
   ].join("\n");
 

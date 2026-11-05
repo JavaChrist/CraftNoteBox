@@ -7,9 +7,12 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(STATIC_CACHE)
-      .then((cache) => cache.add(new Request(OFFLINE_URL, { cache: "reload" })))
-      .then(() => self.skipWaiting()),
+      .then((cache) => cache.add(new Request(OFFLINE_URL, { cache: "reload" }))),
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {

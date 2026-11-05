@@ -6,6 +6,7 @@ import { supabaseToError } from "../supabase/to-error";
 import { requireUser } from "../auth/session";
 import type { Page, PageScope } from "../db/types";
 import { parsePageScope } from "../pages/scopes";
+import { listSections } from "./sections";
 
 function revalidateAppNavigation() {
   revalidatePath("/home");
@@ -54,6 +55,21 @@ export async function listPages(scope: PageScope): Promise<Page[]> {
     .select("*")
     .eq("user_id", user.uid)
     .eq("scope", scope)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false });
+
+  if (error) throw supabaseToError(error);
+  return (data as PageRow[]).map(rowToPage);
+}
+
+export async function listLivePages(): Promise<Page[]> {
+  const user = await requireUser();
+  const supabase = createServiceRoleClient();
+
+  const { data, error } = await supabase
+    .from("pages")
+    .select("*")
+    .eq("user_id", user.uid)
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
 
@@ -125,6 +141,11 @@ export async function createPage(input: {
     scope = rowScope(parentRow as PageRow);
   }
 
+  const sections = await listSections();
+  if (!sections.some((section) => section.slug === scope)) {
+    throw new Error("Rubrique introuvable.");
+  }
+
   const { data, error } = await supabase
     .from("pages")
     .insert({
@@ -188,7 +209,7 @@ export async function updatePage(input: {
     }
     if (rowScope(parentRow as PageRow) !== rowScope(row)) {
       throw new Error(
-        "La page parente doit être dans le même espace (privé ou PRO).",
+        "La page parente doit être dans la même rubrique.",
       );
     }
   }

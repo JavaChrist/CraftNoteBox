@@ -8,7 +8,6 @@ import { useSlate, type RenderElementProps } from "slate-react";
 import { listBlocks } from "@/lib/actions/blocks";
 import { listPagesForMeetingPicker } from "@/lib/actions/meetings";
 import type { PickablePage } from "@/lib/meetings/types";
-import { PAGE_SCOPE_META } from "@/lib/pages/scopes";
 import { useEditorBlockChrome } from "./editor-block-chrome-context";
 import {
   blockSelectClass,
@@ -114,7 +113,7 @@ function PagePicker({
             <option value="">Choisir une page…</option>
             {(pages ?? []).map((page) => (
               <option key={page.id} value={page.id}>
-                {page.title} ({PAGE_SCOPE_META[page.scope].shortLabel})
+                {page.title} ({page.scopeLabel})
               </option>
             ))}
           </select>
