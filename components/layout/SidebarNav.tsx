@@ -9,6 +9,7 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react";
+import SidebarCreateSectionButton from "@/components/layout/SidebarCreateSectionButton";
 
 const items = [
   { href: "/home", label: "Accueil", icon: Home },
@@ -52,6 +53,9 @@ export default function SidebarNav() {
             </li>
           );
         })}
+        <li>
+          <SidebarCreateSectionButton />
+        </li>
       </ul>
     </nav>
   );

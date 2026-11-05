@@ -35,8 +35,8 @@ export default function PagesHome() {
                     <span>
                       Clique sur le bouton{" "}
                       <span className="font-medium text-foreground">+</span> à
-                      côté de la rubrique voulue pour créer une page. Le bouton
-                      Nouvelle rubrique, en bas de la liste, ajoute une rubrique.
+                      côté de la rubrique voulue pour créer une page. Le lien
+                      Rubrique +, sous la corbeille, ajoute une rubrique.
                     </span>
                   </li>
                   <li className="flex gap-2">

@@ -37,10 +37,10 @@ export default function SidebarCreateSectionButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex min-h-11 w-full touch-manipulation items-center gap-2 rounded-md px-2 py-2 text-left text-xs font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+        className="flex min-h-11 w-full touch-manipulation items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-muted-foreground transition hover:bg-secondary/70 hover:text-foreground"
       >
-        <FolderPlus className="h-4 w-4 shrink-0" aria-hidden />
-        Nouvelle rubrique
+        <FolderPlus className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
+        <span className="truncate">Rubrique +</span>
       </button>
       {open ? (
         <SidebarModal title="Nouvelle rubrique" onClose={close}>

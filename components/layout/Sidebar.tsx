@@ -4,7 +4,6 @@ import BrandMark from "@/components/brand/BrandMark";
 import { listLivePages } from "@/lib/actions/pages";
 import { listSections } from "@/lib/actions/sections";
 import ExportArchiveButton from "@/components/export/ExportArchiveButton";
-import SidebarCreateSectionButton from "@/components/layout/SidebarCreateSectionButton";
 import SidebarNav from "@/components/layout/SidebarNav";
 import SidebarScopePages from "@/components/layout/SidebarScopePages";
 import type { Page, PageSection } from "@/lib/db/types";
@@ -101,9 +100,6 @@ export default async function Sidebar() {
                 pages={pagesByScope.get(section.slug) ?? []}
               />
             ))}
-            <div className="px-2 py-2">
-              <SidebarCreateSectionButton />
-            </div>
           </>
         )}
       </div>
